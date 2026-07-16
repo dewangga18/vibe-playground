@@ -1,7 +1,6 @@
-````md
 # Report By Changes Skill
 
-## Purpose
+### Purpose
 
 Generate concise changelog-style reports from current git changes.
 
@@ -11,21 +10,23 @@ The output must follow the existing release summary style:
 - Product-oriented
 - Avoid raw technical diff explanation
 
----
+## Input and Source Discovery
 
-# Input
+Determine the diff source using this priority order:
 
-Analyze current git changes from the current working directory.
+1. **Explicit `commit` param given** → use it directly, ignore working directory state.
+   - One commit-id → diff that commit against its parent: `git diff <id>^ <id>`
+     (if it has no parent — root commit — fall back to `git show <id>`).
+   - Two commit-ids → `git diff <id1> <id2>`.
+2. **No param, working directory has uncommitted changes** → check with
+   `git status --porcelain`; if non-empty, use those changes:
+   - `git diff HEAD` (covers staged + unstaged together)
+   - plus untracked files: `git status --porcelain | grep '^??'`
+     (these are invisible to `git diff` and must be read directly)
+3. **Working directory clean, no param** → fall back to the latest commit:
+   `git diff HEAD^ HEAD` (or `git show HEAD` if it's the repo's only commit).
 
-Use:
-
-```bash
-git status
-git diff
-git diff --cached
-````
-
-Read affected files only when additional context is required.
+Read affected files only when additional context is required beyond the diff.
 
 # Language Option
 
@@ -219,3 +220,4 @@ Before generating final output:
 * Groups related changes
 * Mentions important technical concepts only
 * Output language matches the requested locale
+* Diff source resolved correctly (explicit `commit` param > uncommitted changes > latest commit)
