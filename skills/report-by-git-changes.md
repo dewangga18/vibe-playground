@@ -1,14 +1,9 @@
+---
+name: report-by-git-changes
+description: Generate concise changelog-style reports from current git changes.
+---
+
 # Report By Changes Skill
-
-### Purpose
-
-Generate concise changelog-style reports from current git changes.
-
-The output must follow the existing release summary style:
-- One change per line
-- Short and consistent wording
-- Product-oriented
-- Avoid raw technical diff explanation
 
 ## Input and Source Discovery
 
@@ -43,7 +38,12 @@ The agent adapts **both output wording and its internal working process** (verb 
 
 # Output Format
 
-Output only a markdown bullet list.
+The output must follow the existing release summary style:
+- Markdown bullet list
+- One change per line
+- Short and consistent wording
+- Product-oriented
+- Avoid raw technical diff explanation
 
 Example (default — `language=en`):
 
@@ -67,116 +67,23 @@ Example (`language=id`):
 
 ---
 
-# Writing Style Rules
+# Output Rules
 
-These rules define the **universal changelog structure**. Apply them in whatever language the locale code represents.
+Use concise changelog wording. Apply locale-native verb forms — not word-for-word translations.
 
-Use concise changelog wording.
-
-### Feature / Addition
-
-Express that something new was introduced.
-
-```
-<locale-native verb for "Added/Implemented"> <what> [for <purpose>].
-```
-
-### Improvement
-
-Express that something existing was made better.
-
-```
-<locale-native verb for "Improved/Updated/Optimized"> <area>.
-```
-
-### Refactor
-
-Express that internals were reorganized without external behavior change.
-
-```
-<locale-native verb for "Refactored/Simplified/Cleaned up"> <area>.
-```
-
-## English Reference Patterns
-
-Use these as the canonical baseline. Adapt verb forms for other locales.
-
-| Category | Patterns |
+| Category | English patterns (baseline) |
 |---|---|
 | Feature | `Added <feature>.` · `Implemented <mechanism> for <purpose>.` |
 | Improvement | `Improved <area>.` · `Updated <area>.` · `Optimized <area>.` |
 | Refactor | `Refactored <area>.` · `Simplified <area>.` · `Cleaned up <area>.` |
 
-Examples:
+**Grouping** — summarize by concern, not by file. <br>
+Bad: `Updated NetworkManager.swift.` <br>
+Good: `Refactored network error handling mechanism.`
 
-```
-- Added account not found error handling during OTP verification.
-- Implemented centralized SDK wrapper to simplify cross-platform integration.
-- Improved reward search thumbnail rendering.
-- Refactored network error handling mechanism.
-- Simplified SDK integration using centralized wrapper.
-```
-
-# Grouping Rules
-
-Group related changes into meaningful summaries.
-
-Do not output file-based changes:
-
-Bad:
-
-```
-- Updated NetworkManager.swift.
-- Updated Repository.swift.
-- Updated ViewModel.swift.
-```
-
-Good (`language=en`):
-
-```
-- Refactored network error handling mechanism.
-```
-
-Good (`language=id` — same concept, locale-adapted):
-
-```
-- Refaktorisasi mekanisme error handling pada layanan jaringan.
-```
-
-# Technical Detail Rules
-
-Include technical terms only when they represent meaningful changes.
-
-Allowed:
-
-```
-SDK wrapper
-Repository
-OTP
-Realm migration
-Swift Concurrency
-API layer
-```
-
-Avoid exposing unnecessary implementation details.
-
-Bad:
-
-```
-- Removed #if targetEnvironment(simulator).
-```
-
-Good (`language=en`):
-
-```
-- Simplified SDK integration using centralized wrapper and reduced conditional code.
-```
-
-Good (`language=id` — same concept, locale-adapted):
-
-```
-- Penyederhanaan integrasi SDK melalui wrapper terpusat serta pengurangan kode kondisional.
-```
+**Technical terms** — include only when they represent meaningful changes (`SDK wrapper`, `OTP`, `Realm migration`, `Swift Concurrency`, `API layer`). <br>
+Bad: `Removed #if targetEnvironment(simulator).` <br>
+Good: `Simplified SDK integration using centralized wrapper and reduced conditional code.`
 
 # Transformation Example
 
@@ -197,15 +104,6 @@ Investigate scanner offline issue.
 - Cleaned up image layout after removing adaptive image handling.
 - Fixed available redeem logic.
 - Fixed scanner behavior in offline mode.
-```
-
-## Output (`language=id` — example locale)
-
-```md
-- Penerapan wrapper SDK terpusat untuk menyederhanakan integrasi dan mengurangi kode kondisional.
-- Perapihan tampilan gambar setelah penghapusan adaptive image.
-- Perbaikan logika available redeem.
-- Perbaikan proses scan pada kondisi offline.
 ```
 
 # Quality Checklist

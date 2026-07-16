@@ -1,4 +1,9 @@
-# grademe — Vibe Coding Session Grader
+---
+name: grademe
+description: Grade the user's vibe-coding practice from a session transcript.
+---
+
+# grademe — Vibe Coding Grader ([Reference](https://github.com/venturo-id/venturo-claude/blob/production/plugins/grademe/skills/grademe/SKILL.md))
 
 Grade the USER's practice in a session transcript against the locked 7-dimension rubric (total 100). Output: JSON (contract with vibescore-api — field names/types exact) + short narrative in the requested language.
 
