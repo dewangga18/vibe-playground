@@ -27,30 +27,34 @@ git diff --cached
 
 Read affected files only when additional context is required.
 
----
-
 # Language Option
 
-Supported languages:
+Accept any ISO 639-1 locale code via the `language` param:
 
-```bash
-language=id
-language=en
+```
+language=<locale>   e.g. en, id, ja, fr, de, zh, ko, …
 ```
 
-Default:
+Default is **English (`en`)** unless the user explicitly passes a different locale.
 
-```bash
-language=id
-```
+The agent adapts **both output wording and its internal working process** (verb forms, changelog patterns, grouping labels) to match the requested locale. Use the natural changelog register of that language — not a literal word-for-word translation of the English patterns.
 
----
 
 # Output Format
 
-Output only markdown bullet list.
+Output only a markdown bullet list.
 
-Example:
+Example (default — `language=en`):
+
+```md
+- Refactored network error handling mechanism.
+- Cleaned up error handling boilerplate in the repository layer.
+- Added account not found error handling during OTP verification.
+- Improved application localization and error messages.
+- Updated reward search thumbnail rendering.
+```
+
+Example (`language=id`):
 
 ```md
 - Refaktorisasi mekanisme error handling pada layanan jaringan.
@@ -64,128 +68,53 @@ Example:
 
 # Writing Style Rules
 
-## Indonesian
+These rules define the **universal changelog structure**. Apply them in whatever language the locale code represents.
 
 Use concise changelog wording.
 
 ### Feature / Addition
 
-Patterns:
+Express that something new was introduced.
 
 ```
-Penambahan <fitur/perubahan>.
-Penerapan <mekanisme> untuk <tujuan>.
+<locale-native verb for "Added/Implemented"> <what> [for <purpose>].
 ```
-
-Examples:
-
-```
-Penambahan penanganan error akun tidak ditemukan pada verifikasi OTP.
-Penerapan wrapper SDK terpusat untuk menyederhanakan integrasi lintas platform.
-```
-
----
 
 ### Improvement
 
-Patterns:
+Express that something existing was made better.
 
 ```
-Penyempurnaan <area>.
-Penyesuaian <area>.
-Perbaikan <area>.
-Optimasi <area>.
+<locale-native verb for "Improved/Updated/Optimized"> <area>.
 ```
-
-Examples:
-
-```
-Penyempurnaan pesan dan terjemahan error aplikasi.
-Penyesuaian tampilan thumbnail pada fitur pencarian reward.
-Perbaikan logika available redeem.
-```
-
----
 
 ### Refactor
 
-Patterns:
+Express that internals were reorganized without external behavior change.
 
 ```
-Refaktorisasi <area>.
-Penyederhanaan <area>.
-Pembersihan <area>.
+<locale-native verb for "Refactored/Simplified/Cleaned up"> <area>.
 ```
+
+## English Reference Patterns
+
+Use these as the canonical baseline. Adapt verb forms for other locales.
+
+| Category | Patterns |
+|---|---|
+| Feature | `Added <feature>.` · `Implemented <mechanism> for <purpose>.` |
+| Improvement | `Improved <area>.` · `Updated <area>.` · `Optimized <area>.` |
+| Refactor | `Refactored <area>.` · `Simplified <area>.` · `Cleaned up <area>.` |
 
 Examples:
 
 ```
-Refaktorisasi mekanisme error handling pada layanan jaringan.
-Penyederhanaan integrasi SDK melalui wrapper terpusat.
-Pembersihan kode kondisional yang tidak diperlukan.
+- Added account not found error handling during OTP verification.
+- Implemented centralized SDK wrapper to simplify cross-platform integration.
+- Improved reward search thumbnail rendering.
+- Refactored network error handling mechanism.
+- Simplified SDK integration using centralized wrapper.
 ```
-
----
-
-## English
-
-Use concise release note wording.
-
-### Feature
-
-Patterns:
-
-```
-Added <feature>.
-Implemented <mechanism> for <purpose>.
-```
-
-Examples:
-
-```
-Added account not found error handling during OTP verification.
-Implemented centralized SDK wrapper to simplify cross-platform integration.
-```
-
----
-
-### Improvement
-
-Patterns:
-
-```
-Improved <area>.
-Updated <area>.
-Optimized <area>.
-```
-
-Examples:
-
-```
-Improved reward search thumbnail rendering.
-Updated application localization and error messages.
-```
-
----
-
-### Refactor
-
-Patterns:
-
-```
-Refactored <area>.
-Simplified <area>.
-Cleaned up <area>.
-```
-
-Examples:
-
-```
-Refactored network error handling mechanism.
-Simplified SDK integration using centralized wrapper.
-```
-
----
 
 # Grouping Rules
 
@@ -201,13 +130,17 @@ Bad:
 - Updated ViewModel.swift.
 ```
 
-Good:
+Good (`language=en`):
+
+```
+- Refactored network error handling mechanism.
+```
+
+Good (`language=id` — same concept, locale-adapted):
 
 ```
 - Refaktorisasi mekanisme error handling pada layanan jaringan.
 ```
-
----
 
 # Technical Detail Rules
 
@@ -232,13 +165,17 @@ Bad:
 - Removed #if targetEnvironment(simulator).
 ```
 
-Good:
+Good (`language=en`):
+
+```
+- Simplified SDK integration using centralized wrapper and reduced conditional code.
+```
+
+Good (`language=id` — same concept, locale-adapted):
 
 ```
 - Penyederhanaan integrasi SDK melalui wrapper terpusat serta pengurangan kode kondisional.
 ```
-
----
 
 # Transformation Example
 
@@ -252,7 +189,16 @@ Fix redeem availability checking.
 Investigate scanner offline issue.
 ```
 
-## Output
+## Output (`language=en` — default)
+
+```md
+- Implemented centralized SDK wrapper to simplify integration and reduce conditional code.
+- Cleaned up image layout after removing adaptive image handling.
+- Fixed available redeem logic.
+- Fixed scanner behavior in offline mode.
+```
+
+## Output (`language=id` — example locale)
 
 ```md
 - Penerapan wrapper SDK terpusat untuk menyederhanakan integrasi dan mengurangi kode kondisional.
@@ -260,8 +206,6 @@ Investigate scanner offline issue.
 - Perbaikan logika available redeem.
 - Perbaikan proses scan pada kondisi offline.
 ```
-
----
 
 # Quality Checklist
 
@@ -274,8 +218,4 @@ Before generating final output:
 * Uses changelog style
 * Groups related changes
 * Mentions important technical concepts only
-* Matches requested language
-
-```
-```
-
+* Output language matches the requested locale
