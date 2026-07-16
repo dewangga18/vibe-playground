@@ -1,6 +1,6 @@
 ---
 name: grademe
-description: Grade the user's vibe-coding practice from a session transcript.
+description: Grade the user's vibe-coding practice from a session transcript. Customize path to transcript file.
 ---
 
 # grademe — Vibe Coding Grader ([Reference](https://github.com/venturo-id/venturo-claude/blob/production/plugins/grademe/skills/grademe/SKILL.md))

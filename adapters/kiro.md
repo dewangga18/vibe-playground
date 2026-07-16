@@ -1,16 +1,11 @@
 # Adapter — kiro-cli
 
 `~/.ai/` is the single source of truth for reusable skills, memory, and docs.
+Skills index and trigger patterns live in `~/AGENTS.md` — read that first.
 
-## Skill Discovery
-
-Skills are flat `.md` files in `~/.ai/skills/`. Scan with:
-
-```bash
-ls ~/.ai/skills/*.md
-```
-
-Read each file to infer its purpose from filename and content. Do NOT hardcode the list. Load only skills relevant to the current request.
+## File Access
+- Read files with: `read` tool (built-in)
+- Read a skill file when its name/trigger matches the current request: `~/.ai/skills/<skill-name>.md`
 
 ## Memory
 
@@ -25,7 +20,5 @@ Kiro CLI does not persist memory across sessions. `~/.ai/memory/` is for manual 
 ## Limitations
 
 - **No cross-session memory**: each session starts fresh.
-- **No native skill tool**: load skills by reading `~/.ai/skills/<skill-name>.md` directly.
-- **No auto-skill loading**: the agent reads skill descriptions and decides — no keyword-triggered auto-load.
 - **No PR/issue integration**: use `shell` with `gh` CLI if available.
 - **No conversation branching**: sessions are linear.

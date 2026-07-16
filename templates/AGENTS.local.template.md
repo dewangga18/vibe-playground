@@ -4,6 +4,29 @@ Generate the local project agent instructions file at `./AGENTS.md` (root of the
 
 ## Steps
 
+**0. Check for global toolkit**
+- Check if `~/.ai/` exists and `~/AGENTS.md` exists.
+- **If `~/.ai/` is missing entirely:**
+  > "Global AI toolkit (`~/.ai/`) not found. This project uses `vibe-playground` for shared skills
+  > and standards. You can:
+  > - **Set it up now** — point me to your local `vibe-playground/` clone or share the repo URL
+  >   and I'll guide you through setup.
+  > - **Provide your own context** — share any plan, standards doc, or template you want me to
+  >   follow for this project. I'll use that as the basis for `./AGENTS.md`.
+  > - **Skip for now** — I'll generate a minimal `./AGENTS.md` from the project codebase only,
+  >   no global context. You can set up the toolkit later."
+  - Wait for user's choice before continuing.
+  - If option 1: run setup, then continue with this template.
+  - If option 2: read the provided context, then generate `./AGENTS.md` incorporating it.
+    Do not reference `~/.ai/` or `~/AGENTS.md` in the output.
+  - If option 3: generate `./AGENTS.md` from codebase scan only.
+    Do not reference `~/.ai/` or `~/AGENTS.md` in the output.
+- **If `~/.ai/` exists but `~/AGENTS.md` is missing:**
+  > "`~/AGENTS.md` not found. Want me to generate it from `~/.ai/templates/AGENTS.global.template.md`
+  > before continuing?"
+  - If yes: run `AGENTS.global.template.md` first, then continue with this template.
+  - If no: continue, but note that skills and adapter config won't be available this session.
+
 **1. Check for existing file**
 - If `./AGENTS.md` already exists, show the current content and ask:
   > "AGENTS.md already exists. Overwrite?"
@@ -24,14 +47,28 @@ Generate the local project agent instructions file at `./AGENTS.md` (root of the
 
 Save using the format below. Keep it ~50 lines — only what an agent can't infer from the codebase itself.
 
+### Tip: Custom install path
+
+*Only relevant if `~/.ai/` is set up on this machine.*
+
+This template uses `~/.ai/` by default. <br>
+If you've set `$AI_HOME` to another location, update all
+`~/.ai/` references after copying:
+
+```bash
+grep -rl '~/.ai/' "$AI_HOME" | xargs sed -i '' "s|~/.ai/|$AI_HOME/|g"
+```
+
 ---
 <br>
 <br>
 
 # AGENTS.md
 
-> Global config, skills & standards: `~/AGENTS.md` — read it when you need skills or stack standards.
 > This file is project-specific context only. Don't duplicate what linters or the codebase already enforce.
+>
+> *If context is insufficient for the current task, check `~/AGENTS.md` or `~/CLAUDE.md`
+> if available, or ask the user to provide additional context.*
 
 ## Stack
 **Name:** <project/app name><br>

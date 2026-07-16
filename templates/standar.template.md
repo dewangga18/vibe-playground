@@ -23,6 +23,19 @@ Generate a coding standards file for a specific tech-stack and save it to `~/.ai
 
 Save to `~/.ai/standards/<tech-stack>.md` using this format:
 
+### Tip: Custom install path
+
+This template uses `~/.ai/` by default. <br>
+If you've set `$AI_HOME` to another location, update all
+`~/.ai/` references after copying:
+
+```bash
+grep -rl '~/.ai/' "$AI_HOME" | xargs sed -i '' "s|~/.ai/|$AI_HOME/|g"
+```
+
+---
+<br>
+<br>
 
 # Standards — \<Tech Stack>
 

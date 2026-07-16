@@ -10,6 +10,19 @@ You are a CLI coding agent without a dedicated file in `~/.ai/adapters/`. Create
    about your own tools (no tool-list tables — that's redundant with your system prompt),
    and don't pad with examples that just repeat the section above them.
 
+> **Note:** Skills index (what skills exist and their triggers) lives in `~/AGENTS.md` —
+> not in this adapter. This file only covers runtime quirks specific to this agent.
+
+### Tip: Custom install path
+
+This template uses `~/.ai/` by default. <br>
+If you've set `$AI_HOME` to another location, update all
+`~/.ai/` references after copying:
+
+```bash
+grep -rl '~/.ai/' "$AI_HOME" | xargs sed -i '' "s|~/.ai/|$AI_HOME/|g"
+```
+
 ---
 <br>
 <br>
@@ -17,21 +30,19 @@ You are a CLI coding agent without a dedicated file in `~/.ai/adapters/`. Create
 # Adapter — \<agent-name>
 
 `~/.ai/` is the single source of truth for reusable skills, memory, and docs.
+Skills index and trigger patterns live in `~/AGENTS.md` — read that first.
 
-## Skill Discovery
-- Skills are flat `.md` files in `~/.ai/skills/`.
-- Scan with: `<list/glob command for this agent>`
-- Read a skill's full content only when its filename/purpose matches the request.
-- Do NOT hardcode a skill list — new skills need no adapter changes.
+## File Access
+- Read files with: `<tool name for this agent, e.g. read, read_files, cat via bash>`
+- Read a skill file when its name/trigger matches the current request: `~/.ai/skills/<skill-name>.md`
 
 ## Memory
 - Does this agent persist memory across sessions natively? `<yes/no>`
-- If no: `~/.ai/memory/` is for manual reference files, read on request only — no
-  auto-injection.
+- If no: `~/.ai/memory/` is for manual reference files, read on request only — no auto-injection.
 
-## Session Access (omit if not applicable)
+## Session Access *(omit if not applicable)*
 - Transcript location: `<path pattern>`
 - Find the latest: `<one command>`
 
 ## Limitations
-- `<native gaps specific to this agent — e.g. no auto-skill loading, no PR integration>`
+`<native gaps specific to this agent — e.g. no PR integration, no browser automation>`

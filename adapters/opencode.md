@@ -1,18 +1,11 @@
 # Adapter — opencode
 
 `~/.ai/` is the single source of truth for reusable skills, memory, and docs.
+Skills index and trigger patterns live in `~/AGENTS.md` — read that first.
 
-## Skill Discovery
-
-Skills are flat `.md` files in `~/.ai/skills/`. Scan with:
-
-```bash
-ls ~/.ai/skills/*.md
-```
-
-or `glob("~/.ai/skills/*.md")` via the `glob` tool.
-
-Read each file to infer its purpose from filename and content. Do NOT hardcode the list. Load only skills relevant to the current request using `read`.
+## File Access
+- Read files with: `read` tool, or `glob("~/.ai/skills/*.md")` via the `glob` tool
+- Read a skill file when its name/trigger matches the current request: `~/.ai/skills/<skill-name>.md`
 
 ## Memory
 
@@ -51,7 +44,6 @@ No API, export command, or internal memory hook. SQLite is the only access path.
 
 ## Limitations
 
-- **No auto-skill discovery**: flat `.md` files in `~/.ai/skills/` are not auto-loaded. Scan and `read` them manually.
 - **No cross-session memory**: each session starts fresh.
 - **No native PR/issue integration**: use `bash` with `gh` CLI if available.
 - **No conversation branching**: sessions are linear.

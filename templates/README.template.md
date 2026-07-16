@@ -20,6 +20,19 @@ Generate `README.md` at the root of the current project.
 Use the format below. Skip "Schemes / Build Configuration" if the project has no build variants.
 Keep it factual — no marketing language, no repeating what's in AGENTS.md.
 
+### Tip: Custom install path
+
+This template uses `~/.ai/` by default. <br>
+If you've set `$AI_HOME` to another location, update all
+`~/.ai/` references after copying:
+
+```bash
+grep -rl '~/.ai/' "$AI_HOME" | xargs sed -i '' "s|~/.ai/|$AI_HOME/|g"
+```
+
+---
+<br>
+<br>
 
 # \<Project Name>
 

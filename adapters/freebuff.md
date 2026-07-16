@@ -1,16 +1,11 @@
 # Adapter — freebuff
 
 `~/.ai/` is the single source of truth for reusable skills, memory, and docs.
+Skills index and trigger patterns live in `~/AGENTS.md` — read that first.
 
-## Skill Discovery
-
-Skills are flat `.md` files in `~/.ai/skills/`. Scan with:
-
-```bash
-ls ~/.ai/skills/*.md
-```
-
-(run via `basher`). Read each file to infer its purpose from filename and content. Do NOT hardcode the list. Load only skills relevant to the current request using `read_files`.
+## File Access
+- Read files with: `read_files` tool
+- Read a skill file when its name/trigger matches the current request: `~/.ai/skills/<skill-name>.md`
 
 ## Memory
 
