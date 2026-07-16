@@ -111,26 +111,6 @@ Skills are flat `.md` files in `~/.ai/skills/`. The Skills Index in `~/AGENTS.md
 | `grademe` | "grade me", "grade this session" | Grades the user's vibe-coding practice from a session transcript against a 7-dimension rubric. Outputs JSON + narrative. |
 | `report-by-git-changes` | "report changes", "changelog" | Generates a concise changelog-style report from current git diff or a specific commit. |
 
-### Adding a Skill
-
-1. Create `~/.ai/skills/<skill-name>.md` with a frontmatter block:
-
-```markdown
----
-name: my-skill
-description: What this skill does in one sentence.
----
-
-# My Skill
-
-Instructions for the agent...
-```
-
-2. Regenerate `~/AGENTS.md` so the new skill appears in the Skills Index:
-   > *"Regenerate `~/AGENTS.md` from `~/.ai/templates/AGENTS.global.template.md`."*
-
-No adapter changes needed.
-
 ## Adapters
 
 Adapters tell agents about their own runtime: which file tool to use, where sessions are stored, and what native limitations exist. They do **not** contain a skills list — that lives in `~/AGENTS.md`.
@@ -181,13 +161,7 @@ Templates in `~/.ai/templates/` are prompt instructions for generating standard 
 
 Cause: `~/.ai/adapters/` or `~/.ai/skills/` was empty when the agent ran the template.
 
-Fix: populate `~/.ai/` first, then regenerate:
-```bash
-cp ~/Documents/vibe-playground/adapters/* ~/.ai/adapters/
-cp ~/Documents/vibe-playground/skills/*   ~/.ai/skills/
-cp ~/Documents/vibe-playground/templates/* ~/.ai/templates/
-```
-Then ask the agent to regenerate `~/AGENTS.md`.
+Fix: populate `~/.ai/` first, using the [Installation](#installation) steps.
 
 ---
 
@@ -209,13 +183,5 @@ Cause: Skills Index in `~/AGENTS.md` was not updated after the skill was added.
 Fix: Regenerate `~/AGENTS.md`:
 > *"Regenerate `~/AGENTS.md` from `~/.ai/templates/AGENTS.global.template.md`."*
 
-## Contributing / Adding Assets
-
-This repo is intentionally minimal — each file should earn its place.
-
-- **New skill**: add `skills/<name>.md`, follow the frontmatter convention, then regenerate `~/AGENTS.md`
-- **New adapter**: add `adapters/<agent>.md`, follow `templates/adapter.template.md`, then regenerate `~/AGENTS.md`
-- **New standard**: add `standards/<stack>.md`, follow `templates/standar.template.md`
-- **New template**: add `templates/<name>.template.md`, document it in this README
-
-No build step, no registry, no framework — just flat `.md` files.
+or 
+> *"Read `~/.ai/skills/*.md` then update `~/AGENTS.md` Skills Index with the new skill"*
