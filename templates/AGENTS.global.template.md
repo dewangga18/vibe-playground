@@ -42,14 +42,29 @@ Save using the format below. Fill the adapter table and skills index from the sc
   - If not: create the file with content: `👉 Read ~/AGENTS.md`
 
 **6. Generate `~/ALWAYS.md` (optional)**
-- Show the user the full list of skills discovered in step 3.
+- If the step 3 scan returned **zero** skills → **skip this entire step**. Do not ask
+  the user anything and do not create `~/ALWAYS.md`.
+- Otherwise, show the user the full list of skills discovered in step 3.
 - Ask:
   > "Which of these skills should be loaded automatically at the start of every session,
   > without needing a trigger phrase? Select any, or none to skip."
 - Wait for the user's selection before writing anything.
 - If at least one skill is selected → write `~/ALWAYS.md` using the format in the output
-  section below.
+  section below, then run step 6b.
 - If none selected → skip. Do not create the file.
+
+**6b. Wire the pointer into `~/AGENTS.md`**
+- After `~/ALWAYS.md` is written (step 6), ensure `~/AGENTS.md` contains the
+  "Always-Active Skills" section that points to it. If `~/AGENTS.md` was already
+  written in step 4 without that section, add it now (insert before "## Memory"):
+  ```markdown
+  ## Always-Active Skills
+
+  If `~/ALWAYS.md` exists, read it now and load every skill listed in it before responding
+  to any request this session.
+  ```
+- This keeps `~/AGENTS.md` and `~/ALWAYS.md` in sync — the pointer must exist or the
+  always-active skills are never loaded.
 
 ### Tip: Custom install path
 
@@ -106,7 +121,8 @@ Save to `~/.ai/adapters/<agent-name>.md`.
 
 ## Always-Active Skills
 
-<!-- FILL only if ~/ALWAYS.md exists — omit this section entirely if the file is not present -->
+<!-- Include this section ONLY if ~/ALWAYS.md was actually created in step 6/6b.
+     Omit it entirely if no always-active skills were selected or if step 3 found zero skills. -->
 If `~/ALWAYS.md` exists, read it now and load every skill listed in it before responding
 to any request this session.
 
