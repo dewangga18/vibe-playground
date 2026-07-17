@@ -121,7 +121,7 @@ Return ONLY this JSON (field names/types exact; breakdown values sum to total_sc
 ## Validation (main agent, before presenting)
 
 - JSON parses; all contract fields present (`prompt_analysis` optional).
-- Each breakdown value ≤ its max (20/20/15/15/15/10/5); values sum to `total_score`.
+- Each breakdown value ≤ its max, checked by field name (not position — JSON object key order isn't guaranteed): planning 20 / context 20 / decomposition 15 / delegation 15 / verification 15 / token_efficiency 10 / documentation 5. Values sum to `total_score`.
 - `misses` non-empty → `total_score` ≤ 94; `misses` empty → `total_score` ≥ 95. Violation → re-dispatch.
 - Citation check: `grep` the transcript file for each miss's quoted string / tool id (grep only — do not read the transcript). Citation not found → strip that item; >1 citation fails → reject the output.
 - `participant` is self-reported and unverified — say so in the narrative.
