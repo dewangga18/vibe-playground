@@ -110,6 +110,7 @@ Skills are flat `.md` files in `~/.ai/skills/`. The Skills Index in `~/AGENTS.md
 |---|---|---|
 | `grademe` | "grade me", "grade this session" | Grades the user's vibe-coding practice from a session transcript against a 7-dimension rubric. Outputs JSON + narrative. |
 | `report-by-git-changes` | "report changes", "changelog" | Generates a concise changelog-style report from current git diff or a specific commit. |
+| `subcommands` | "sync skills", "sync subcommands", "/subcommands" | Syncs skills in `~/.ai/skills/` to native custom commands in Kiro, OpenCode, and Freebuff. Supports `-path=`, `-github=`, and `-md=` params for custom sources. |
 
 ## Adapters
 
