@@ -18,9 +18,9 @@ Generate or update the global agent instructions file at `~/AGENTS.md`.
 - If either folder is missing or empty → **stop**. Inform the user:
   > "`~/.ai/` is not populated yet. Copy assets from `vibe-playground/` first:"
   > ```bash
-  > cp ~/Documents/vibe-playground/adapters/* ~/.ai/adapters/
-  > cp ~/Documents/vibe-playground/skills/*   ~/.ai/skills/
-  > cp ~/Documents/vibe-playground/templates/* ~/.ai/templates/
+  > cp ~/path/to/vibe-playground/adapters/* ~/.ai/adapters/
+  > cp ~/path/to/vibe-playground/skills/*   ~/.ai/skills/
+  > cp ~/path/to/vibe-playground/templates/* ~/.ai/templates/
   > ```
   > Then ask the agent to run this template again.
 - Do not proceed until both folders have content.
