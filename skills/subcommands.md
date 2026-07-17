@@ -248,10 +248,15 @@ Argument (if provided): {{input}}
 Invoke: `/<id>` only — never register `@<id>` for the same skill.
 
 ### OpenCode → `~/.opencode/commands/<id>.md`
+
+> **Note:** `skill_path:` is not a standard OpenCode frontmatter field — it's an informational
+> label only. What actually runs the skill is the `Read and follow...` line in the body.
+> `agent:` is optional; omit it to use the default agent. `$ARGUMENTS` is required only if
+> the command needs to accept arguments.
+
 ```markdown
 ---
 description: <extracted description — omit this line entirely if none>
-skill_path: ~/.ai/skills/<id>.md
 agent: build
 ---
 Read and follow the full instructions in `~/.ai/skills/<id>.md` before doing

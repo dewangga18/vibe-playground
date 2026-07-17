@@ -41,6 +41,16 @@ Save using the format below. Fill the adapter table and skills index from the sc
   - If you can create a symlink to `~/AGENTS.md`: do so.
   - If not: create the file with content: `👉 Read ~/AGENTS.md`
 
+**6. Generate `~/ALWAYS.md` (optional)**
+- Show the user the full list of skills discovered in step 3.
+- Ask:
+  > "Which of these skills should be loaded automatically at the start of every session,
+  > without needing a trigger phrase? Select any, or none to skip."
+- Wait for the user's selection before writing anything.
+- If at least one skill is selected → write `~/ALWAYS.md` using the format in the output
+  section below.
+- If none selected → skip. Do not create the file.
+
 ### Tip: Custom install path
 
 This template uses `~/.ai/` by default. <br>
@@ -94,6 +104,12 @@ Read the matching adapter **before** responding — it tells you how to read fil
 Read `~/.ai/templates/adapter.template.md` and create one now.
 Save to `~/.ai/adapters/<agent-name>.md`.
 
+## Always-Active Skills
+
+<!-- FILL only if ~/ALWAYS.md exists — omit this section entirely if the file is not present -->
+If `~/ALWAYS.md` exists, read it now and load every skill listed in it before responding
+to any request this session.
+
 ## Skills Index
 
 <!-- FILL from ~/.ai/skills/*.md scan — one row per file -->
@@ -114,3 +130,22 @@ If no file exists for the current stack, offer to generate one (see "When to Rea
 
 No agent here has automatic cross-session memory. `~/.ai/memory/` is for manual reference
 files — read on request only, no auto-injection.
+
+---
+<br>
+<br>
+
+## `~/ALWAYS.md` format *(for step 6 — save to `~/ALWAYS.md`, not to `~/AGENTS.md`)*
+
+```markdown
+## Always-Active Skills
+
+Unlike the Skills Index below, these are read proactively at the start
+of every session — not gated behind a trigger phrase match.
+
+| Skill | File |
+|---|---|
+| `<id>` | `~/.ai/skills/<id>.md` |
+```
+
+List only the skills the user selected in step 6. One row per skill.

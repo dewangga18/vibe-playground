@@ -229,3 +229,32 @@ Fix: Regenerate `~/AGENTS.md`:
 
 or 
 > *"Read `~/.ai/skills/*.md` then update `~/AGENTS.md` Skills Index with the new skill"*
+
+---
+
+**Agent cannot load `~/.ai/skills/` or a custom skills path**
+
+Cause: The agent's file access is restricted to the current workspace directory. Paths outside
+the workspace (like `~/.ai/`) require explicit permission depending on the agent.
+
+Fix per agent:
+
+*OpenCode* — add `external_directory` permission in `opencode.json` (global config at
+`~/.config/opencode/opencode.json` or per-project at `.opencode/opencode.json`):
+```json
+{
+  "permission": {
+    "external_directory": {
+      "~/.ai/**": "allow"
+    }
+  }
+}
+```
+If using a custom `$AI_HOME`, replace `~/.ai/` with your actual path.
+
+*Kiro CLI* — when the agent prompts for file access approval, approve it. To pre-allow
+permanently, add `allowedPaths` to the tool settings in your Kiro config, or run `/tools`
+in the chat to manage permissions interactively.
+
+*Other agents* — approve the access request when prompted, or check your agent's
+documentation for an equivalent `allowedPaths` or `external_directory` config option.
