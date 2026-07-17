@@ -68,12 +68,13 @@ The agent passes the resolved locale to the subagent via `{LANGUAGE}` and writes
      - Detect which tool is running from transcript format or fallback to checking which directory/database exists.
    - Note: For Freebuff, the most recent chat folder is likely the current live session. The agent will auto-detect this and ask for confirmation before grading.
    - Skip sidechain/subagent transcripts (`isSidechain: true`, or no top-level string-content user messages).
-   - Skip the current live session by default; grade it only on explicit user confirmation. If only one chat exists for a project, assume it's the live session.
+   - Skip the current live session by default; grade it only on explicit user confirmation. If only one chat exists for a project, assume it's the live session. If the transcript opens with a compaction summary, say so in the narrative — evidence before compaction is not gradable.
    - No file found → tell user to pass an explicit path (`/grademe <path-to-session.jsonl>`). Do NOT guess.
 2. **Resolve participant**: from argument, else ask the user, else `"unknown"`.
-3. **Dispatch grader**: spawn one subagent with the prompt template below, placeholders filled. Do not summarize the transcript for it.
+3. **Dispatch grader**: spawn one subagent (Task/Agent tool, general-purpose) with the prompt template below, placeholders filled. Do not summarize the transcript for it.
 4. **Validate** returned JSON (see Validation). Invalid → re-dispatch once with the validation error appended; still invalid → report failure.
 5. **Present**: the JSON in a fenced block, then a narrative in `{LANGUAGE}` (score headline, 2–3 strongest/weakest dimensions, the advice).
+6. **Persist for leaderboard**: main thread computes session_id and graded_at, then writes the file directly (mkdir -p + write) — no subagent dispatch. It's a mechanical local file write, not a regrade and not a network call, so there's no self-grading bias or side-effect risk to isolate. See "Persist step" below for the exact contents.
 
 ## Grader subagent prompt template
 
@@ -128,3 +129,35 @@ Return ONLY this JSON (field names/types exact; breakdown values sum to total_sc
 ## Presenting
 
 After the fenced JSON, add one provenance line in the narrative: transcript path, sessionId, discovered vs explicitly passed (`sumber: otomatis` / `sumber: manual`), file mtime, line count. Narrative language follows the `language` param. If the leaderboard submission path rejects `prompt_analysis`, submit contract fields only and show prompt_analysis to the user separately.
+
+## Persist step
+
+Runs after Presenting, once per graded session, in the main thread — not a subagent.
+
+Compute first:
+- `session_id`: transcript's own `sessionId` field if the format has one; otherwise first 16 hex chars of `sha256(transcript_path + session_date)`.
+- `graded_at`: current UTC timestamp, format `YYYYMMDDTHHMMSSZ` (e.g. `20260717T153045Z` — zero-padded, no separators, so filenames sort correctly newest-last with a plain `sort`).
+
+Path (must match `submit-grade`'s expectation exactly): `~/.vibescore/grades/{GRADED_AT}_{SESSION_ID}.json`
+
+Write, verbatim, no reformatting/re-sorting/rounding of any field:
+```bash
+mkdir -p ~/.vibescore/grades
+```
+```json
+{
+  "schema_version": "1.0",
+  "session_id": "{SESSION_ID}",
+  "graded_at": "{GRADED_AT}",
+  "grade": {VALIDATED_JSON},
+  "provenance": {
+    "transcript_path": "{TRANSCRIPT_PATH}",
+    "discovered": {true|false},
+    "file_mtime": "{FILE_MTIME}",
+    "line_count": {LINE_COUNT}
+  }
+}
+```
+`{VALIDATED_JSON}` is the exact object returned by the grader subagent in step 3/4, unchanged.
+
+Report the confirmed path back to the user as part of the provenance line; a write failure is shown to the user, not silently retried. Note: because the filename is timestamp-led, re-grading the same transcript creates a NEW file each time rather than overwriting — `~/.vibescore/grades/` becomes a local grading history, and `submit-grade` with no argument always picks the most recent run via lexical sort. Pruning old files is manual, not automatic.

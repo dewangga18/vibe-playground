@@ -15,13 +15,15 @@ Generate a coding standards file for a specific tech-stack and save it to `~/.ai
 - Wait for explicit confirmation before continuing.
 
 **3. Search best practices**
-- Query the web for current best practices (e.g. `"<stack> best practices 2025 do dont"`).
+- Query the web for current best practices (e.g. `"<stack> best practices <current year> do dont"`).
 - Prioritize official docs, widely-adopted style guides, and community consensus.
 - Discard opinions without broad adoption.
 
 **4. Generate the file**
 
-Save to `~/.ai/standards/<tech-stack>.md` using this format:
+Save to `~/.ai/standards/<tech-stack>.md` using this format as a starting structure —
+adapt sections to what's most relevant for the stack. Keep it concise — aim for under 50 lines.
+Expand only where the stack genuinely requires depth; no padding.
 
 ### Tip: Custom install path
 
@@ -61,6 +63,3 @@ Pick the single most relevant section for this stack. Examples:
 - **Performance** — SQL, Redis, C++
 - **Testing** — any stack where testing patterns are non-obvious
 - ...
-
-
-Target length: <50 lines. Exceed only if the stack genuinely requires it — no padding.

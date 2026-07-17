@@ -191,7 +191,7 @@ Templates in `~/.ai/templates/` are prompt instructions for generating standard 
 | `~/AGENTS.md` not auto-injected on all agents | Agent has no awareness of `~/.ai/` | Verify your agent supports startup files; mention it explicitly if needed |
 | No cross-session memory | Every session starts fresh | Use `~/.ai/memory/` for context that must persist |
 | Skills Index can go stale | Agent won't know about new skills | Regenerate `~/AGENTS.md` after adding any skill or adapter |
-| Standards not auto-generated | Agent may work without stack conventions | Agent will prompt user to generate when stack is detected but no standards file exists |
+| Standards not auto-generated | Agent may work without stack conventions | Agent offers to generate when stack is detected — requires global instructions file to be read at session start; falls back to vibe-playground clone or user-provided context if template is unavailable |
 
 ## Troubleshooting
 

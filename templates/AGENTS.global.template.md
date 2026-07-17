@@ -69,6 +69,10 @@ Read this file at the start of every session. After reading:
 - **Stack detected but no `~/.ai/standards/<stack>.md`** → offer to create one:
   > "No standards found for `<stack>`. Generate from `~/.ai/templates/standar.template.md`?"
   Wait for user confirmation before proceeding.
+  - If `~/.ai/templates/standar.template.md` exists → run it to generate the file.
+  - If not → check if a `vibe-playground/` clone is available and offer to copy the template from there.
+  - If neither → ask the user to provide stack conventions or rules to follow, then generate
+    `~/.ai/standards/<stack>.md` from that context directly.
 - **User request is ambiguous** → check the Skills Index below before asking for clarification.
   A matching skill likely covers it.
 
