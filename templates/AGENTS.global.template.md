@@ -35,11 +35,11 @@ Generate or update the global agent instructions file at `~/AGENTS.md`.
 Save using the format below. Fill the adapter table and skills index from the scan in step 3 — do NOT hardcode.
 
 **5. Check if a pointer file is needed**
-- After writing `~/AGENTS.md`, check if your agent requires a different startup file
-  (e.g. `~/CLAUDE.md` for Claude Code / Freebuff).
-- If yes and the file doesn't exist:
-  - If you can create a symlink: `ln -s ~/AGENTS.md ~/CLAUDE.md`
-  - If not: create `~/CLAUDE.md` with content: `👉 Read ~/AGENTS.md`
+- After writing `~/AGENTS.md`, check if your agent reads a different startup file by default
+  (some agents use a different filename as their entry point).
+- If yes and that file doesn't exist yet:
+  - If you can create a symlink to `~/AGENTS.md`: do so.
+  - If not: create the file with content: `👉 Read ~/AGENTS.md`
 
 ### Tip: Custom install path
 

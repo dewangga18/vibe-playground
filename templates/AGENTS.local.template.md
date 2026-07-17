@@ -5,7 +5,8 @@ Generate the local project agent instructions file at `./AGENTS.md` (root of the
 ## Steps
 
 **0. Check for global toolkit**
-- Check if `~/.ai/` exists and `~/AGENTS.md` exists.
+- Check if `~/.ai/` exists and your global agent instructions file (e.g. `~/AGENTS.md` or
+  equivalent for your agent) exists.
 - **If `~/.ai/` is missing entirely:**
   > "Global AI toolkit (`~/.ai/`) not found. This project uses `vibe-playground` for shared skills
   > and standards. You can:
@@ -18,12 +19,12 @@ Generate the local project agent instructions file at `./AGENTS.md` (root of the
   - Wait for user's choice before continuing.
   - If option 1: run setup, then continue with this template.
   - If option 2: read the provided context, then generate `./AGENTS.md` incorporating it.
-    Do not reference `~/.ai/` or `~/AGENTS.md` in the output.
+    Do not reference `~/.ai/` or the global instructions file in the output.
   - If option 3: generate `./AGENTS.md` from codebase scan only.
-    Do not reference `~/.ai/` or `~/AGENTS.md` in the output.
-- **If `~/.ai/` exists but `~/AGENTS.md` is missing:**
-  > "`~/AGENTS.md` not found. Want me to generate it from `~/.ai/templates/AGENTS.global.template.md`
-  > before continuing?"
+    Do not reference `~/.ai/` or the global instructions file in the output.
+- **If `~/.ai/` exists but the global instructions file is missing:**
+  > "Global agent instructions file not found. Want me to generate it from
+  > `~/.ai/templates/AGENTS.global.template.md` before continuing?"
   - If yes: run `AGENTS.global.template.md` first, then continue with this template.
   - If no: continue, but note that skills and adapter config won't be available this session.
 
@@ -67,8 +68,8 @@ grep -rl '~/.ai/' "$AI_HOME" | xargs sed -i '' "s|~/.ai/|$AI_HOME/|g"
 
 > This file is project-specific context only. Don't duplicate what linters or the codebase already enforce.
 >
-> *If context is insufficient for the current task, check `~/AGENTS.md` or `~/CLAUDE.md`
-> if available, or ask the user to provide additional context.*
+> *If context is insufficient for the current task, check your global agent instructions file
+> in your home directory if available, or ask the user to provide additional context.*
 
 ## Stack
 **Name:** <project/app name><br>

@@ -9,8 +9,20 @@ You are a CLI coding agent without a dedicated file in `~/.ai/adapters/`. Create
 4. Keep it lean: skip any section that doesn't apply, don't restate what you already know
    about your own tools (no tool-list tables — that's redundant with your system prompt),
    and don't pad with examples that just repeat the section above them.
+5. After saving the adapter, ask the user about auto-injection:
+   - Check if you support a startup or steering file that loads automatically every session.
+   - If yes, present **two options** to the user:
+     - **Option A — auto-inject:** Create a startup/steering file that instructs you to read
+       your global agent instructions file (e.g. `~/AGENTS.md` or equivalent for your agent) at 
+       the start of every session. State what the file is, where it lives, and that it will affect 
+       all sessions including unrelated projects. Ask for explicit approval before creating anything.
+     - **Option B — manual:** No file created. User mentions `~/<agent-name>.md` when needed.
+   - Do not name specific filenames (e.g. `AGENTS.md`, `CLAUDE.md`) in the options — you know
+     what your own startup file is called. Let the user approve based on impact, not file names.
+   - If you don't support a startup file, inform the user and suggest mentioning `~/<agent-name>.md`
+     manually at the start of each session.
 
-> **Note:** Skills index (what skills exist and their triggers) lives in `~/AGENTS.md` —
+> **Note:** Skills index (what skills exist and their triggers) lives in your global agent instructions file —
 > not in this adapter. This file only covers runtime quirks specific to this agent.
 
 ### Tip: Custom install path
@@ -30,7 +42,7 @@ grep -rl '~/.ai/' "$AI_HOME" | xargs sed -i '' "s|~/.ai/|$AI_HOME/|g"
 # Adapter — \<agent-name>
 
 `~/.ai/` is the single source of truth for reusable skills, memory, and docs.
-Skills index and trigger patterns live in `~/AGENTS.md` — read that first.
+Skills index and trigger patterns live in your global agent instructions file — read that first.
 
 ## File Access
 - Read files with: `<tool name for this agent, e.g. read, read_files, cat via bash>`

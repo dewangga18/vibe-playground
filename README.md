@@ -115,7 +115,11 @@ Skills are flat `.md` files in `~/.ai/skills/`. The Skills Index in `~/AGENTS.md
 
 Adapters tell agents about their own runtime: which file tool to use, where sessions are stored, and what native limitations exist. They do **not** contain a skills list — that lives in `~/AGENTS.md`.
 
-### Supported Agents
+### Example Adapters
+
+> **Note:** The adapters in `adapters/` are the author's personal examples — they show what a
+> finished adapter looks like for a specific machine. Other users should generate their own via
+> `~/.ai/templates/adapter.template.md`, not copy these directly.
 
 | Agent | Adapter | Notes |
 |---|---|---|
@@ -131,6 +135,40 @@ Tell your agent:
 
 The agent fills in its own runtime details and saves to `~/.ai/adapters/<agent-name>.md`.
 Then regenerate `~/AGENTS.md` so the new adapter appears in the adapter table.
+
+### Auto-Injection (Optional)
+
+By default, `~/AGENTS.md` is not loaded unless the agent supports a startup file or you mention
+it manually. To make the agent aware of `~/.ai/` every session without explicit prompting, you
+can add a steering or startup file — the exact mechanism depends on your agent.
+
+**Delegate to your agent:**
+
+> "Check if you support a startup or steering file that's loaded automatically every session.
+> If yes, tell me what it is and what the impact would be, then ask for my approval before
+> creating anything. The file should instruct you to read your global agent instructions file
+> at session start."
+
+**Or use this general format** if you want to create the file yourself:
+
+```
+---
+inclusion: always   # or equivalent front-matter for your agent
+---
+Read your global agent instructions file (~/AGENTS.md or equivalent) at the start of this
+session before responding to any request.
+```
+
+Save to the path your agent expects (e.g. `~/.kiro/steering/agents.md` for Kiro CLI).
+Impact: the agent will load its global instructions — and the skills index — automatically every
+session, even for unrelated projects. Turn off by removing or disabling the file.
+
+**Adding skills to an existing steering file mid-development:**
+
+If you want to add a skill reference later without regenerating `~/AGENTS.md`:
+
+> "Update my startup/steering file to also remind you to check `~/.ai/skills/` when
+> a request might match a skill. Ask me which skills to include before writing anything."
 
 ## Templates
 
@@ -157,6 +195,9 @@ Templates in `~/.ai/templates/` are prompt instructions for generating standard 
 
 ## Troubleshooting
 
+> File paths and filenames below reflect the default setup (`~/AGENTS.md`, `~/.ai/`). Adapt to
+> your actual paths if you've customized them.
+
 **`~/AGENTS.md` generated with empty adapter table or skills index**
 
 Cause: `~/.ai/adapters/` or `~/.ai/skills/` was empty when the agent ran the template.
@@ -167,12 +208,14 @@ Fix: populate `~/.ai/` first, using the [Installation](#installation) steps.
 
 **Agent does not pick up skills or adapters**
 
-Cause: `~/AGENTS.md` either does not exist or is not being read at session start.
+Cause: Global agent instructions file either does not exist or is not being read at session start.
 
 Fix:
 1. Verify `~/AGENTS.md` exists — if not, generate it (see Installation step 5).
-2. Check that your agent supports a startup/context file (`AGENTS.md`, `CLAUDE.md`, etc.).
-3. If not supported natively, add `~/AGENTS.md` to your agent's context manually at the start of each session.
+2. Check that your agent supports a startup/context file that loads automatically. The filename
+   varies per agent — ask your agent: *"Do you support a startup or steering file?"*
+3. If not supported natively, add your global instructions file to context manually at the start
+   of each session.
 
 ---
 
