@@ -96,7 +96,7 @@ fi
 
 Tell your agent:
 
-> "Read `~/Documents/vibe-playground/templates/AGENTS.global.template.md` and set up `~/.ai/` for me."
+> "Read `~/path/to/vibe-playground/templates/AGENTS.global.template.md` and set up `~/.ai/` for me."
 
 The agent will validate that `~/.ai/` is populated, scaffold any missing structure, and generate `~/AGENTS.md`. It will ask for confirmation before overwriting any existing files.
 
