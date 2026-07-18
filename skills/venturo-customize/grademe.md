@@ -3,7 +3,7 @@ name: grademe
 description: Grade the user's vibe-coding practice from a session transcript. Customize path to transcript file.
 ---
 
-# grademe — Vibe Coding Grader ([Reference](https://github.com/venturo-id/venturo-claude/blob/production/plugins/grademe/skills/grademe/SKILL.md))
+# grademe — Vibe Coding Grader 
 
 Grade the USER's practice in a session transcript against the locked 7-dimension rubric (total 100). Output: JSON (contract with vibescore-api — field names/types exact) + short narrative in the requested language.
 
@@ -12,17 +12,23 @@ Grade the USER's practice in a session transcript against the locked 7-dimension
 ## Params
 
 ```
-language=<locale>   e.g. en, id, ja, fr  (default: id)
+<name>               participant name for the grade record (required)
+locale=<locale>   e.g. en, id, ja, fr  (default: id)
+path=<path>         optional transcript path (auto-discovered if omitted)
 ```
 
-The agent passes the resolved locale to the subagent via `{LANGUAGE}` and writes the final narrative in that language. The JSON contract fields (`misses`, `next_session_advice`) must also be written in the requested language.
+The first argument `<name>` is **required** (participant name). If not provided, the agent will skip grading and prompt for it. The `name` sets the `participant` field in the output JSON. The agent passes the resolved locale to the subagent via `{LANGUAGE}` and writes the final narrative in that language.
 
 ## Workflow
 
-1. **Locate transcript.**
-   - Argument is a path to `*.jsonl` → use it.
-   - Argument is a participant name (not a path) → use it as `participant`, discover file as below.
-   - Default discovery:
+1. **Resolve participant (required).**
+   - First positional argument `<name>` → use as `participant`.
+   - If no name provided → **skip grading** and prompt user for participant name.
+
+2. **Locate transcript (optional).**
+   - `path=<path>` parameter → use it.
+   - First positional argument if it's a path to `*.jsonl` → use it.
+   - Default discovery (if no path given):
      - **Freebuff**: newest `log.jsonl` in `~/.config/manicode/projects/<cwd-slug>/chats/<timestamp>/`, where `<cwd-slug>` = basename of current working directory (e.g. `/Users/a/proj` → `proj`). Find the most recent chat timestamp folder.
        ```bash
        ls -t ~/.config/manicode/projects/<cwd-slug>/chats/ | head -1
@@ -69,12 +75,11 @@ The agent passes the resolved locale to the subagent via `{LANGUAGE}` and writes
    - Note: For Freebuff, the most recent chat folder is likely the current live session. The agent will auto-detect this and ask for confirmation before grading.
    - Skip sidechain/subagent transcripts (`isSidechain: true`, or no top-level string-content user messages).
    - Skip the current live session by default; grade it only on explicit user confirmation. If only one chat exists for a project, assume it's the live session. If the transcript opens with a compaction summary, say so in the narrative — evidence before compaction is not gradable.
-   - No file found → tell user to pass an explicit path (`/grademe <path-to-session.jsonl>`). Do NOT guess.
-2. **Resolve participant**: from argument, else ask the user, else `"unknown"`.
-3. **Dispatch grader**: spawn one subagent (Task/Agent tool, general-purpose) with the prompt template below, placeholders filled. Do not summarize the transcript for it.
-4. **Validate** returned JSON (see Validation). Invalid → re-dispatch once with the validation error appended; still invalid → report failure.
-5. **Present**: the JSON in a fenced block, then a narrative in `{LANGUAGE}` (score headline, 2–3 strongest/weakest dimensions, the advice).
-6. **Persist for leaderboard**: main thread computes session_id and graded_at, then writes the file directly (mkdir -p + write) — no subagent dispatch. It's a mechanical local file write, not a regrade and not a network call, so there's no self-grading bias or side-effect risk to isolate. See "Persist step" below for the exact contents.
+   - No file found → tell user to pass an explicit path (`/grademe path=<path-to-session.jsonl>`). Do NOT guess.
+2. **Dispatch grader**: spawn one subagent (Task/Agent tool, general-purpose) with the prompt template below, placeholders filled. Do not summarize the transcript for it.
+3. **Validate** returned JSON (see Validation). Invalid → re-dispatch once with the validation error appended; still invalid → report failure.
+4. **Present**: the JSON in a fenced block, then a narrative in `{LANGUAGE}` (score headline, 2–3 strongest/weakest dimensions, the advice).
+5. **Persist for leaderboard**: main thread computes session_id and graded_at, then writes the file directly (mkdir -p + write) — no subagent dispatch. It's a mechanical local file write, not a regrade and not a network call, so there's no self-grading bias or side-effect risk to isolate. See "Persist step" below for the exact contents.
 
 ## Grader subagent prompt template
 

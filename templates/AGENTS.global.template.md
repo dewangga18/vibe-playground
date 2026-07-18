@@ -27,8 +27,13 @@ Generate or update the global agent instructions file at `~/AGENTS.md`.
 
 **3. Scan available assets**
 - Adapters: `ls ~/.ai/adapters/*.md` — collect agent names from filenames.
-- Skills: `ls ~/.ai/skills/*.md` — for each file, read its frontmatter `name`, `description`,
-  and first heading to extract the trigger pattern.
+- Skills: `ls ~/.ai/skills/*.md` — read frontmatter `name`, `description`, first heading.
+- If `~/AGENTS.md` already exists (from step 1) and has a `## Skills Index` table, diff the
+  newly scanned skills against the ones already recorded there. Skills that appear now but
+  weren't recorded = **new skills**.
+- Identify the currently active adapter (`~/.ai/adapters/<agent-name>.md`). Check whether that
+  file declares a **native always-active mechanism** (steering/hooks path + format).
+  - If none / no adapter yet → treat as "no native mechanism", fall back to `~/ALWAYS.md`.
 
 **4. Generate `~/AGENTS.md`**
 
@@ -41,30 +46,55 @@ Save using the format below. Fill the adapter table and skills index from the sc
   - If you can create a symlink to `~/AGENTS.md`: do so.
   - If not: create the file with content: `👉 Read ~/AGENTS.md`
 
-**6. Generate `~/ALWAYS.md` (optional)**
-- If the step 3 scan returned **zero** skills → **skip this entire step**. Do not ask
-  the user anything and do not create `~/ALWAYS.md`.
-- Otherwise, show the user the full list of skills discovered in step 3.
+**6. Always-active rules (optional)**
+
+- If step 3 returns zero skills AND this is a first-time build → skip this step entirely.
+
+*First-time build* (no prior `~/AGENTS.md`):
+- Show the full list of skills discovered in step 3.
 - Ask:
-  > "Which of these skills should be loaded automatically at the start of every session,
-  > without needing a trigger phrase? Select any, or none to skip."
-- Wait for the user's selection before writing anything.
-- If at least one skill is selected → write `~/ALWAYS.md` using the format in the output
-  section below, then run step 6b.
-- If none selected → skip. Do not create the file.
+  > "Are there any rules/instructions the agent should apply on EVERY request — not just
+  > when a trigger matches? You can pick from the skills above, or give a custom instruction."
+- Wait for the user's input. If nothing is selected/provided → skip, don't create any file.
+
+*Regenerate with new skills* (`~/AGENTS.md` already exists, step 3 found new skills):
+- Do NOT re-ask about skills that were already recorded.
+- For each new skill, the agent analyzes its frontmatter/description/trigger: does it look
+  suitable for always-on application (broad, context-independent) vs. narrow/trigger-based?
+- If at least one looks suitable → ask the user, showing ONLY those candidates:
+  > "The new skill `<name>` looks like it should be applied on every request (because
+  > `<reason>`). Add it to the always-active rules?"
+- If there are no new skills, or none look suitable → skip silently, don't ask the user.
+
+**Where to write it:**
+- If the active adapter (from step 3) has a native mechanism → write/append there, following
+  that adapter's declared path & format.
+- Otherwise → write/append to `~/ALWAYS.md`. If that file already exists, show its contents
+  and confirm append vs. replace first (mirror the pattern used for `~/AGENTS.md` in step 1).
 
 **6b. Wire the pointer into `~/AGENTS.md`**
-- After `~/ALWAYS.md` is written (step 6), ensure `~/AGENTS.md` contains the
-  "Always-Active Skills" section that points to it. If `~/AGENTS.md` was already
-  written in step 4 without that section, add it now (insert before "## Memory"):
-  ```markdown
-  ## Always-Active Skills
+- Only relevant when step 6's target was the generic `~/ALWAYS.md` fallback. If the rules were
+  routed to a native mechanism, do NOT add a "read now" instruction — just an informational
+  note, since the native mechanism is already auto-loaded by the tool itself, outside the
+  AGENTS.md read path.
+- Insert point STAYS: after `## No adapter for you yet?`, before `## Skills Index` — for both
+  first build and later patching. (Replaces the old "insert before `## Memory`" instruction,
+  which was in the wrong position.)
 
-  If `~/ALWAYS.md` exists, read it now and load every skill listed in it before responding
-  to any request this session.
-  ```
-- This keeps `~/AGENTS.md` and `~/ALWAYS.md` in sync — the pointer must exist or the
-  always-active skills are never loaded.
+Generic fallback:<br>
+```bash
+## Always-Active Skills
+
+If `~/ALWAYS.md` exists, read it now and load every skill listed in it before responding
+to any request this session.
+```
+
+Native fallback (informational only, not an executable instruction):<br>
+```bash
+## Always-Active Rules
+This agent uses <AgentName>'s native steering/hooks mechanism for always-active rules —
+see `~/.ai/adapters/<agent-name>.md` for location and format. Not routed through this file.
+```
 
 ### Tip: Custom install path
 

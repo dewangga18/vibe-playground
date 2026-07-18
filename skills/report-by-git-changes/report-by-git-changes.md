@@ -23,17 +23,29 @@ Determine the diff source using this priority order:
 
 Read affected files only when additional context is required beyond the diff.
 
-# Language Option
+# Locale Option
 
-Accept any ISO 639-1 locale code via the `language` param:
+Accept any ISO 639-1 locale code via the `locale` param:
 
 ```
-language=<locale>   e.g. en, id, ja, fr, de, zh, ko, …
+locale=<locale>   e.g. en, id, ja, fr, de, zh, ko, …
 ```
 
-Default is **English (`en`)** unless the user explicitly passes a different locale.
+Default is **English (`en`)** unless the user explicitly passes a different locale. When invoked without the `locale` param, the skill MUST default to `en` and produce properly formatted English output.
 
 The agent adapts **both output wording and its internal working process** (verb forms, changelog patterns, grouping labels) to match the requested locale. Use the natural changelog register of that language — not a literal word-for-word translation of the English patterns.
+
+# Size Option
+
+Control approximate line length (characters per bullet point) via the `size` param:
+
+```
+size=<number>   e.g. 50, 70, 80, 90, 100
+```
+
+Default is **65–100 characters** per line (current behavior). The agent will regenerate output to meet the target:
+- `size=80` → each line close to or concise ~80 chars lines
+- `size=90-100` → each line in 90–100 char range
 
 
 # Output Format
@@ -45,7 +57,7 @@ The output must follow the existing release summary style:
 - Product-oriented
 - Avoid raw technical diff explanation
 
-Example (default — `language=en`):
+Example (default — `locale=en`):
 
 ```md
 - Refactored network error handling mechanism.
@@ -55,7 +67,7 @@ Example (default — `language=en`):
 - Updated reward search thumbnail rendering.
 ```
 
-Example (`language=id`):
+Example (`locale=id`):
 
 ```md
 - Refaktorisasi mekanisme error handling pada layanan jaringan.
@@ -97,7 +109,7 @@ Fix redeem availability checking.
 Investigate scanner offline issue.
 ```
 
-## Output (`language=en` — default)
+## Output (`locale=en` — default)
 
 ```md
 - Implemented centralized SDK wrapper to simplify integration and reduce conditional code.

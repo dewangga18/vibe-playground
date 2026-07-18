@@ -76,17 +76,22 @@ export AI_HOME=~/.ai
 # 2. Create the directory structure
 mkdir -p "$AI_HOME"/{adapters,memory,skills,standards,templates}
 
-# 3. Copy assets from this repo
+# 3. Copy skill files (not directories) from this repo
+cp skills/report-by-git-changes/report-by-git-changes.md "$AI_HOME/skills/"
+cp skills/venturo-customize/grademe.md "$AI_HOME/skills/"
+cp skills/venturo-customize/submit-grade.md "$AI_HOME/skills/"
+cp skills/subcommands/subcommands.md "$AI_HOME/skills/"
+
+# 4. Copy adapters & templates
 cp adapters/*   "$AI_HOME/adapters/"
-cp skills/*     "$AI_HOME/skills/"
 cp templates/*  "$AI_HOME/templates/"
 
-# 4. If using a custom $AI_HOME, replace hardcoded paths
+# 5. If using a custom $AI_HOME, replace hardcoded paths
 if [ "$AI_HOME" != "$HOME/.ai" ]; then
   grep -rl '~/.ai/' "$AI_HOME" | xargs sed -i '' "s|~/.ai/|$AI_HOME/|g"
 fi
 
-# 5. Generate global agent instructions
+# 6. Generate global agent instructions
 # Tell your agent:
 # "Read ~/.ai/templates/AGENTS.global.template.md and generate ~/AGENTS.md for me."
 # Re-run this step whenever you add new skills or adapters.
@@ -109,6 +114,7 @@ Skills are flat `.md` files in `~/.ai/skills/`. The Skills Index in `~/AGENTS.md
 | Skill | Trigger | Description |
 |---|---|---|
 | `grademe` | "grade me", "grade this session" | Grades the user's vibe-coding practice from a session transcript against a 7-dimension rubric. Outputs JSON + narrative. |
+| `submit-grade` | "submit grade", "upload grade" | Uploads graded results to the vibescore leaderboard. Requires API credentials. |
 | `report-by-git-changes` | "report changes", "changelog" | Generates a concise changelog-style report from current git diff or a specific commit. |
 | `subcommands` | "sync skills", "sync subcommands", "/subcommands" | Syncs skills in `~/.ai/skills/` to native custom commands in Kiro, OpenCode, and Freebuff. Supports `-path=`, `-github=`, and `-md=` params for custom sources. |
 
@@ -212,7 +218,7 @@ Fix: populate `~/.ai/` first, using the [Installation](#installation) steps.
 Cause: Global agent instructions file either does not exist or is not being read at session start.
 
 Fix:
-1. Verify `~/AGENTS.md` exists — if not, generate it (see Installation step 5).
+1. Verify `~/AGENTS.md` exists — if not, generate it (see Installation step 6).
 2. Check that your agent supports a startup/context file that loads automatically. The filename
    varies per agent — ask your agent: *"Do you support a startup or steering file?"*
 3. If not supported natively, add your global instructions file to context manually at the start

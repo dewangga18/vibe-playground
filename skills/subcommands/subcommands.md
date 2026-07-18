@@ -138,7 +138,7 @@ skills already in `~/.ai/skills/`.
 Check cwd for markers, in this order:
 - `.kiro/` present → **Kiro**
 - `.opencode/` or `opencode.json` present → **OpenCode**
-- `.agents/` present (and not matched above) → **Freebuff**
+- `.agents/` present → **Freebuff**
 - None of the above → **General / unlisted agent**, follow the fallback
   procedure in Step 5 instead of the three named ones.
 
@@ -176,17 +176,16 @@ treat that as "zero results, nothing integrated." That's an unhandled
 case per the section above; report the error and ask before assuming
 anything about integration status.
 
-**Freebuff** (per-repo, cwd — not global, do not skip this distinction):
+**Freebuff** (global `~/.agents/skills/` only):
 ```
-for d in .agents/skills/*/; do
+for d in ~/.agents/skills/*/; do
+  [ -d "$d" ] || continue
   name=$(basename "$d")
   target=$(readlink "${d}SKILL.md" 2>/dev/null)
   [ "$target" = "$HOME/.ai/skills/${name}.md" ] && echo "$name"
 done
 ```
-An id integrated in one repo tells you nothing about any other repo.
-Freebuff status must be re-checked every time you're in a different
-project.
+Freebuff skills are installed globally at `~/.agents/skills/` and apply to all repos. This is the single source of truth — no per-repo integration.
 
 **General / unlisted agent:**
 There's no known file location to grep yet, so check for evidence in two
@@ -280,10 +279,10 @@ Pre-flight check first, every time, before creating anything:
    integration — fix the source file first.` This check exists because
    Freebuff's own loader requires the match; it is not this tool's
    preference.
-3. Only if valid:
+3. Create global symlink:
 ```bash
-mkdir -p .agents/skills/<id>
-ln -sf ~/.ai/skills/<id>.md .agents/skills/<id>/SKILL.md
+mkdir -p ~/.agents/skills/<id>
+ln -sf ~/.ai/skills/<id>.md ~/.agents/skills/<id>/SKILL.md
 ```
 Invoke: `/skill:<id>`
 
@@ -328,8 +327,7 @@ note that they are in-memory only and will not persist across sessions.
   have one — omit the field.
 - Never assume Freebuff frontmatter is present or correct — always validate
   before symlinking, every single time, not just on first setup.
-- Never treat Freebuff's integration status as global — it's per-repo,
-  re-check on every cwd change.
+- Never treat Freebuff's integration status as per-repo — it's global at `~/.agents/skills/`, applies to all repos.
 - Never invent command syntax for an unlisted agent (guessing `/name` vs
   `@name` vs anything else) — verify against that agent's own docs or
   `--help` first, or fall back to reactive skill loading instead.
