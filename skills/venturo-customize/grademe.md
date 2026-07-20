@@ -54,7 +54,7 @@ The first argument `<name>` is **required** (participant name). If not provided,
         ```bash
         python3 -c "import time; print(int(time.time() * 1000))"
         ```
-        If `(now_ms - last_msg_ts) < 300000` → session is live, skip by default.
+        If `(now_ms - last_msg_ts) < 300000` → session is live. Do NOT skip automatically — ask the user whether to grade it now or skip it, and proceed based on their answer (see live-session handling below).
         Export to JSONL via:
         ```bash
         sqlite3 ~/.local/share/opencode/opencode.db \
@@ -72,9 +72,9 @@ The first argument `<name>` is **required** (participant name). If not provided,
           ORDER BY m.time_created ASC;" > /tmp/opencode_transcript_{SESSION_ID}.jsonl
         ```
      - Detect which tool is running from transcript format or fallback to checking which directory/database exists.
-   - Note: For Freebuff, the most recent chat folder is likely the current live session. The agent will auto-detect this and ask for confirmation before grading.
+   - Note: For Freebuff, the most recent chat folder is likely the current live session. The agent will auto-detect this and ask the user whether to grade it now or skip it.
    - Skip sidechain/subagent transcripts (`isSidechain: true`, or no top-level string-content user messages).
-   - Skip the current live session by default; grade it only on explicit user confirmation. If only one chat exists for a project, assume it's the live session. If the transcript opens with a compaction summary, say so in the narrative — evidence before compaction is not gradable.
+   - **Live-session handling**: if the discovered/default transcript is the current live session, do NOT skip it automatically. Instead, tell the user it looks like the current live session and ask whether they want to (a) grade it now anyway, or (b) skip it (e.g. pick an older transcript, or pass an explicit `path=`). Proceed only after the user answers — do not assume either choice. If only one chat exists for a project, it's still treated as a live session for this purpose and the same question is asked. If the transcript opens with a compaction summary, say so in the narrative — evidence before compaction is not gradable.
    - No file found → tell user to pass an explicit path (`/grademe path=<path-to-session.jsonl>`). Do NOT guess.
 3. **Dispatch grader**: spawn one subagent (Task/Agent tool, general-purpose) with the prompt template below, placeholders filled. Do not summarize the transcript for it.
 4. **Validate** returned JSON (see Validation). Invalid → re-dispatch once with the validation error appended; still invalid → report failure.
