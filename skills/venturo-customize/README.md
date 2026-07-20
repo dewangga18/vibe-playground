@@ -2,12 +2,11 @@
 
 This skill set provides two Opencode skills for grading and submitting vibe-coding practice sessions to a leaderboard:
 
-1. **grademe** - Grade the user's vibe-coding practice from a session transcript against a 7-dimension rubric (total 100 points). Outputs JSON (contract with vibescore-api) and a short narrative in the requested language.
+1. **grademe** - Grade the user's vibe-coding practice from a session transcript against a 7-dimension rubric (total 100 points). Outputs JSON (contract with vibescore-api) and a short narrative in the requested language. Persists results to `~/.vibescore/grades/` (schema `1.1`, includes `session_name`, `compacted`, and `transcript_meta`).
 
-2. **submit-grade** - Upload graded results to the vibescore leaderboard. Reads from `~/.vibescore/grades/` and submits via API. 
+2. **submit-grade** - Upload the newest graded result to the vibescore leaderboard. Always reads the latest file from `~/.vibescore/grades/` (no arguments/flags) and submits via API. Accepts `schema_version` `1.0` or `1.1` and forwards the new contract fields as-is.
 
 > **Note for non-Venturo users:** This skill is designed for the Venturo vibescore leaderboard. If you don't have Venturo credentials, you can still use `grademe` for local grading, but `submit-grade` will only run in dry-run mode. To skip submission entirely, simply don't configure the API credentials.
-
 
 ## Why This Exists
 
@@ -18,14 +17,16 @@ This skill set is derived from the [venturo-claude](https://github.com/venturo-i
 ### grademe
 - Locates session transcripts from various sources (Opencode, Claude Code, Kiro, Freebuff)
 - Dispatches a grading subagent that evaluates the transcript against a rubric
-- Returns JSON results and a narrative summary
-- Persists graded results to `~/.vibescore/grades/` for later submission
+- Returns JSON results (contract fields: `participant`, `session_date`, `session_name`, `compacted`, `total_score`, `breakdown`, `misses`, `next_session_advice`, `prompt_analysis`) and a narrative summary
+- Persists graded results to `~/.vibescore/grades/` (file schema `1.1`) for later submission, including a `transcript_meta` block (line count, byte size, sha256 prefix, first/last timestamps) and a tiered `session_id` derivation per harness
 
 ### submit-grade
-- Reads persisted grade files from `~/.vibescore/grades/`
-- Validates the grade data
+- Always reads the **newest** graded file from `~/.vibescore/grades/` — accepts no arguments, paths, or flags
+- Re-validates the grade data (accepts `schema_version` `1.0` or `1.1`)
+- Forwards `session_name`, `compacted`, and `transcript_meta` as-is (does not recompute them)
+- Independently re-derives `session_id` using the same tiered logic as grademe
 - Submits to the vibescore leaderboard API
-- Handles deduplication and error reporting
+- Handles deduplication (409), auth (401), and contract errors (400, with fallback to strip new fields if the backend rejects them)
 
 ## Getting Started
 
@@ -66,10 +67,8 @@ After syncing, invoke the skills with:
 # or specify language
 /grademe <participant-name> locale=en
 
-# Submit the most recent grade
+# Submit the most recent grade (newest file in ~/.vibescore/grades/)
 /submit-grade
-# or specify a particular grade file
-/submit-grade /path/to/grade-file.json
 ```
 
 ## Original Reference

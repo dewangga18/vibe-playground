@@ -76,10 +76,10 @@ The first argument `<name>` is **required** (participant name). If not provided,
    - Skip sidechain/subagent transcripts (`isSidechain: true`, or no top-level string-content user messages).
    - Skip the current live session by default; grade it only on explicit user confirmation. If only one chat exists for a project, assume it's the live session. If the transcript opens with a compaction summary, say so in the narrative — evidence before compaction is not gradable.
    - No file found → tell user to pass an explicit path (`/grademe path=<path-to-session.jsonl>`). Do NOT guess.
-2. **Dispatch grader**: spawn one subagent (Task/Agent tool, general-purpose) with the prompt template below, placeholders filled. Do not summarize the transcript for it.
-3. **Validate** returned JSON (see Validation). Invalid → re-dispatch once with the validation error appended; still invalid → report failure.
-4. **Present**: the JSON in a fenced block, then a narrative in `{LANGUAGE}` (score headline, 2–3 strongest/weakest dimensions, the advice).
-5. **Persist for leaderboard**: main thread computes session_id and graded_at, then writes the file directly (mkdir -p + write) — no subagent dispatch. It's a mechanical local file write, not a regrade and not a network call, so there's no self-grading bias or side-effect risk to isolate. See "Persist step" below for the exact contents.
+3. **Dispatch grader**: spawn one subagent (Task/Agent tool, general-purpose) with the prompt template below, placeholders filled. Do not summarize the transcript for it.
+4. **Validate** returned JSON (see Validation). Invalid → re-dispatch once with the validation error appended; still invalid → report failure.
+5. **Present**: the JSON in a fenced block, then a narrative in `{LANGUAGE}` (score headline, 2–3 strongest/weakest dimensions, the advice).
+6. **Persist for leaderboard**: main thread computes session_id and graded_at, then writes the file directly (mkdir -p + write) — no subagent dispatch. It's a mechanical local file write, not a regrade and not a network call, so there's no self-grading bias or side-effect risk to isolate. See "Persist step" below for the exact contents.
 
 ## Grader subagent prompt template
 
@@ -111,10 +111,16 @@ EVIDENCE RULE (contractual): every item in `misses` MUST quote or reference a co
 
 session_date: the `timestamp` FIELD of the first transcript line that has one — never dates inside message/content text.
 
+session_name: a short human-readable label for the session. Priority: (1) a title/slug field if the harness format has one (e.g. opencode `s.title` from the discovery query) → use it; (2) fallback: take the first user message text, trimmed to ~80 characters; (3) if neither is available → `"(untitled)"`.
+
+compacted: boolean. `true` if the transcript is a resumed/compacted session — i.e. the transcript starts with a structured compaction marker (if the harness format has one) OR the opening message text matches common compaction phrases (e.g. "ringkasan percakapan", "dilanjutkan dari sesi sebelumnya", "conversation summary", "continued from the previous session", and similar variants). This is a portable, schema-independent detection — do not rely on any specific field name; match the phrase patterns in the message text. `false` otherwise.
+
 Return ONLY this JSON (field names/types exact; breakdown values sum to total_score):
 {
   "participant": "{PARTICIPANT}",
   "session_date": "ISO8601",
+  "session_name": "string",
+  "compacted": false,
   "total_score": 0,
   "breakdown": {"planning":0,"context":0,"decomposition":0,"delegation":0,"verification":0,"token_efficiency":0,"documentation":0},
   "misses": ["string — {LANGUAGE}, each citing transcript evidence"],
@@ -125,7 +131,7 @@ Return ONLY this JSON (field names/types exact; breakdown values sum to total_sc
 
 ## Validation (main agent, before presenting)
 
-- JSON parses; all contract fields present (`prompt_analysis` optional).
+- JSON parses; all contract fields present (`prompt_analysis` optional). `session_name` MUST be a non-empty string; `compacted` MUST be a boolean. Both are required.
 - Each breakdown value ≤ its max, checked by field name (not position — JSON object key order isn't guaranteed): planning 20 / context 20 / decomposition 15 / delegation 15 / verification 15 / token_efficiency 10 / documentation 5. Values sum to `total_score`.
 - `misses` non-empty → `total_score` ≤ 94; `misses` empty → `total_score` ≥ 95. Violation → re-dispatch.
 - Citation check: `grep` the transcript file for each miss's quoted string / tool id (grep only — do not read the transcript). Citation not found → strip that item; >1 citation fails → reject the output.
@@ -140,8 +146,39 @@ After the fenced JSON, add one provenance line in the narrative: transcript path
 Runs after Presenting, once per graded session, in the main thread — not a subagent.
 
 Compute first:
-- `session_id`: transcript's own `sessionId` field if the format has one; otherwise first 16 hex chars of `sha256(transcript_path + session_date)`.
+- `session_id` — **tiered derivation** (replaces the old sha256-only logic):
+  1. **Native ID per-harness** (highest priority — source differs per harness):
+     - Claude Code → the transcript's own `sessionId` field in the JSONL (already used).
+     - opencode → `s.id` from the discovery SQL query result (already known at discovery time — **no need** to re-parse from file).
+     - Kiro CLI → the filename itself (already unique per session per the existing discovery pattern).
+     - Freebuff → the **timestamp folder name** (`<timestamp>/`), not the file name (the file is always literally `log.jsonl`, which is uninformative; the folder is already unique per session).
+  2. If tier 1 is unavailable → filename stem via `basename`.
+  3. If tier 2 is still generic / collision-prone (e.g. `basename` yields `"log"`) → fallback `sha256(transcript_path + session_date)`, first 16 hex chars (the old logic, retained as a last-resort safety net).
 - `graded_at`: current UTC timestamp, format `YYYYMMDDTHHMMSSZ` (e.g. `20260717T153045Z` — zero-padded, no separators, so filenames sort correctly newest-last with a plain `sort`).
+- `transcript_meta` — all via mechanical bash (no new script):
+  ```bash
+  line_count=$(wc -l < "$TRANSCRIPT_PATH")
+  byte_size=$(wc -c < "$TRANSCRIPT_PATH")
+  sha256_prefix=$(sha256sum "$TRANSCRIPT_PATH" 2>/dev/null | cut -c1-12 || shasum -a 256 "$TRANSCRIPT_PATH" | cut -c1-12)
+  ```
+  `first_timestamp` / `last_timestamp` → the `timestamp` field of the first and last JSONL line that has one, via a `python3 -c` one-liner (same pattern already used for live-session detection in opencode discovery):
+  ```bash
+  python3 -c "
+  import json,sys
+  first=last=None
+  with open('$TRANSCRIPT_PATH') as f:
+      for line in f:
+          line=line.strip()
+          if not line: continue
+          try: o=json.loads(line)
+          except: continue
+          ts=o.get('timestamp')
+          if ts is None: continue
+          if first is None: first=ts
+          last=ts
+  print(first or '', last or '')
+  "
+  ```
 
 Path (must match `submit-grade`'s expectation exactly): `~/.vibescore/grades/{GRADED_AT}_{SESSION_ID}.json`
 
@@ -151,7 +188,7 @@ mkdir -p ~/.vibescore/grades
 ```
 ```json
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "session_id": "{SESSION_ID}",
   "graded_at": "{GRADED_AT}",
   "grade": {VALIDATED_JSON},
@@ -160,9 +197,16 @@ mkdir -p ~/.vibescore/grades
     "discovered": {true|false},
     "file_mtime": "{FILE_MTIME}",
     "line_count": {LINE_COUNT}
+  },
+  "transcript_meta": {
+    "line_count": {LINE_COUNT},
+    "byte_size": {BYTE_SIZE},
+    "sha256_prefix": "{SHA256_PREFIX}",
+    "first_timestamp": "{FIRST_TIMESTAMP}",
+    "last_timestamp": "{LAST_TIMESTAMP}"
   }
 }
 ```
-`{VALIDATED_JSON}` is the exact object returned by the grader subagent in step 3/4, unchanged.
+`{VALIDATED_JSON}` is the exact object returned by the grader subagent in step 4, unchanged (it now also contains `session_name` and `compacted`).
 
-Report the confirmed path back to the user as part of the provenance line; a write failure is shown to the user, not silently retried. Note: because the filename is timestamp-led, re-grading the same transcript creates a NEW file each time rather than overwriting — `~/.vibescore/grades/` becomes a local grading history, and `submit-grade` with no argument always picks the most recent run via lexical sort. Pruning old files is manual, not automatic.
+Report the confirmed path back to the user as part of the provenance line; a write failure is shown to the user, not silently retried. Note: because the filename is timestamp-led, re-grading the same transcript creates a NEW file each time rather than overwriting — `~/.vibescore/grades/` becomes a local grading history, and `submit-grade` with no argument always picks the most recent run via lexical sort. Pruning old files is manual, not automatic. `provenance` (existing local audit trail) and `transcript_meta` (mirrors the submission contract) are intentionally separate — there is minor overlap (`line_count` appears in both) but each keeps a clear purpose. `schema_version` is bumped to `"1.1"` to mark the contract addition.
