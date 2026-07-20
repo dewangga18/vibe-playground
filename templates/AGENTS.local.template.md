@@ -28,25 +28,78 @@ Generate the local project agent instructions file at `./AGENTS.md` (root of the
   - If yes: run `AGENTS.global.template.md` first, then continue with this template.
   - If no: continue, but note that skills and adapter config won't be available this session.
 
-**1. Check for existing file**
-- If `./AGENTS.md` already exists, show the current content and ask:
-  > "AGENTS.md already exists. Overwrite?"
-- Wait for explicit confirmation before continuing.
+**1. Detect existing file**
+- Check if `./AGENTS.md` already exists. Note this as first-time build or regenerate — it
+  determines whether step 4 (reconcile) runs.
+- Do NOT ask about overwrite/improve yet. That decision happens in step 4, once fresh project
+  info has actually been collected — asking now would be a blind guess with nothing concrete
+  to compare against.
 
-**2. Detect the stack**
-- Scan the project root for stack indicators: `package.json`, `go.mod`, `Cargo.toml`,
-  `requirements.txt`, `pyproject.toml`, `Podfile`, `pubspec.yaml`, etc.
-- If uncertain or multiple stacks found, ask the user to confirm.
+**2. Check native init capability**
+- Read the active adapter's `Native Init Behavior` block (`native_init_command`,
+  `native_entry_files.project`, `reconciliation_policy`). If the adapter doesn't declare this
+  block, treat as no native mechanism and go straight to step 3 (manual).
+- **Native entry file already has real content** (e.g. `./CLAUDE.md` exists and is not just a
+  pointer) → use it as the data source for step 3. Do not re-scan the codebase from scratch;
+  extract stack/commands/architecture/gotchas from it instead.
+- **Native entry file is missing or is just a pointer, but `native_init_command` exists** →
+  offer:
+  > "This agent has `<native_init_command>` for scanning the codebase. Want me to run it first,
+  > then map the output into `./AGENTS.md`?"
+  - If yes: run it, then use its output as the source for step 3 (same as above).
+  - If no: fall through to step 3 (manual).
+- **No native mechanism declared** → go straight to step 3 (manual).
 
 **3. Collect project info**
+<br>*Populate the following either by extracting from the native source identified in step 2, or
+by scanning the codebase directly if no native source is available — do not do both.*
 - Name, purpose, tech stack, environments (staging/prod endpoints if visible in config).
-- Key commands: install, run, test, lint — read from `package.json`, `Makefile`, README, etc.
+- Key commands: install, run, test, lint.
 - Top-level folder structure: scan 1-2 levels deep.
 - Non-obvious gotchas: look for comments in config files, existing docs, or ask the user.
+- If uncertain about stack (multiple stacks found, or native source is ambiguous), ask the
+  user to confirm.
 
-**4. Generate `./AGENTS.md`**
+**4. Reconcile with existing file** 
+<br>*(skip entirely if step 1 found no existing `./AGENTS.md`
+— go straight to step 5 with a fresh build)*
+- Classify each output section into two kinds:
+  - **Inferable** — Stack, Commands, Folders: derived directly from the codebase/native
+    source, safe to refresh automatically.
+  - **Curated** — Mandatory Rules, Conventions (deviations), Gotchas: usually hand-written by
+    a human; the agent cannot safely regenerate these from a scan alone.
+- Diff the freshly collected info (step 2-3) against the existing file's inferable sections.
+  Summarize what changed (e.g. "test command changed from `jest` to `vitest`", "new folder
+  `services/` not documented yet").
+- Present the user with three options:
+  > "`./AGENTS.md` already exists. Based on a fresh scan, I found `<N>` changes. What would
+  > you like to do?
+  > - **Overwrite** — replace the whole file with a freshly generated version
+  > - **Suggest improvements only** — update inferable sections that changed, leave Mandatory
+  >   Rules / Conventions / Gotchas untouched, and list anything new I noticed as suggestions
+  >   for you to review and add manually
+  > - **Keep as is** — cancel, don't touch the file"
+- Wait for explicit confirmation before continuing.
+  - **Overwrite** → proceed to step 5, full regeneration.
+  - **Suggest improvements only** → in step 5, edit only inferable sections that changed;
+    leave curated sections untouched. For anything new found in a curated category (e.g. a
+    likely gotcha), append it under a `<!-- suggested, review before keeping -->` comment
+    instead of writing it in directly.
+  - **Keep as is** → stop here. Do not modify `./AGENTS.md`.
 
-Save using the format below. Keep it ~50 lines — only what an agent can't infer from the codebase itself.
+**5. Generate `./AGENTS.md`**
+<br>Save using the format below, applying the mode chosen in step 4 (fresh build, full overwrite,
+or targeted update). Keep it ~50 lines — only what an agent can't infer from the codebase itself.
+
+**6. Wire project-level pointer**
+- Check the native entry file for this project (per adapter's `native_entry_files.project`,
+  e.g. `./CLAUDE.md`).
+- If it doesn't exist yet → create it as a pointer-guarded file:
+  > "👉 Project rules: `./AGENTS.md`. Do not add content directly here — run
+  > `AGENTS.local.template.md` instead."
+- If it exists with real content → that means it was already consumed as the source in step 2.
+  Convert it to the same pointer-guarded content now.
+- If no native mechanism is declared for this adapter → skip this step entirely.
 
 ### Tip: Custom install path
 
@@ -66,7 +119,8 @@ grep -rl '~/.ai/' "$AI_HOME" | xargs sed -i '' "s|~/.ai/|$AI_HOME/|g"
 
 # AGENTS.md
 
-> This file is project-specific context only. Don't duplicate what linters or the codebase already enforce.
+> This file is project-specific context only. Don't duplicate what linters, standards files,
+> or the codebase already enforce.
 >
 > *If context is insufficient for the current task, check your global agent instructions file
 > in your home directory if available, or ask the user to provide additional context.*
@@ -96,6 +150,10 @@ CI config: `<path>` *(omit if none)*
 - **Core principles.** Simplicity first, fix root causes (no temp patches), minimal impact.
 
 ## Conventions
+<!-- If ~/.ai/standards/<stack>.md exists and this project follows it as-is, write only:
+     "Follows ~/.ai/standards/<stack>.md" and stop here.
+     Otherwise, list ONLY what deviates from that standard (or, if no standards file exists
+     for this stack, list the actual conventions in use). Do not restate the full standard. -->
 - Naming: <e.g. camelCase vars, PascalCase types>
 - Doc comments: every new function/method needs a short comment (purpose, params, return) in the language's standard format.
 - Commit format: `<type>: <short description>`

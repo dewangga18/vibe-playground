@@ -4,17 +4,18 @@ Generate or update the global agent instructions file at `~/AGENTS.md`.
 
 ## Steps
 
-**1. Check for existing file**
-- If `~/AGENTS.md` already exists, show the current content and ask:
-  > "~/AGENTS.md already exists. Overwrite?"
-- Wait for explicit confirmation before continuing.
+**1. Detect existing file**
+- Check if `~/AGENTS.md` already exists. Note this as first-time build or regenerate — it
+  determines whether step 4 (reconcile) runs.
+- Do NOT ask about overwrite yet. That decision happens in step 4, once fresh scan results
+  actually exist to diff against.
 
 **2. Validate `~/.ai/` is populated**
 - Check that `~/.ai/adapters/` and `~/.ai/skills/` exist and are not empty:
-  ```bash
+```bash
   ls ~/.ai/adapters/*.md 2>/dev/null
   ls ~/.ai/skills/*.md 2>/dev/null
-  ```
+```
 - If either folder is missing or empty → **stop**. Inform the user:
   > "`~/.ai/` is not populated yet. Copy assets from `vibe-playground/` first:"
   > ```bash
@@ -28,25 +29,50 @@ Generate or update the global agent instructions file at `~/AGENTS.md`.
 **3. Scan available assets**
 - Adapters: `ls ~/.ai/adapters/*.md` — collect agent names from filenames.
 - Skills: `ls ~/.ai/skills/*.md` — read frontmatter `name`, `description`, first heading.
-- If `~/AGENTS.md` already exists (from step 1) and has a `## Skills Index` table, diff the
-  newly scanned skills against the ones already recorded there. Skills that appear now but
-  weren't recorded = **new skills**.
-- Identify the currently active adapter (`~/.ai/adapters/<agent-name>.md`). Check whether that
-  file declares a **native always-active mechanism** (steering/hooks path + format).
-  - If none / no adapter yet → treat as "no native mechanism", fall back to `~/ALWAYS.md`.
+- If `~/AGENTS.md` already exists (from step 1) and has `## Tool Adapters` / `## Skills Index`
+  tables, diff the freshly scanned adapters and skills against what's already recorded.
+  Items that appear now but weren't recorded = **new**. Items recorded but no longer found =
+  **removed**.
+- Identify the currently active adapter (`~/.ai/adapters/<agent-name>.md`). Read its
+  `Native Always-Active Mechanism` block (`supported`, `mechanism`, `format`).
+  - If `supported: no`, or the adapter doesn't declare this block, or no adapter exists yet →
+    fall back to `~/ALWAYS.md`.
 
-**4. Generate `~/AGENTS.md`**
+**4. Reconcile with existing file** *(skip entirely if step 1 found no existing `~/AGENTS.md`
+— go straight to step 5 with a fresh build)*
+- Summarize the diff from step 3: new/removed adapters, new/removed skills.
+- If the existing file contains any content outside the auto-filled tables and standard
+  boilerplate (e.g. manually added notes), treat that as curated and preserve it in merge mode.
+- Present the user with three options:
+  > "`~/AGENTS.md` already exists. Since last generated: `<N>` new skill(s), `<N>` new
+  > adapter(s)`<, N removed>`. What would you like to do?
+  > - **Overwrite** — regenerate the whole file from the current scan
+  > - **Merge only** — update the Tool Adapters / Skills Index tables, keep any manually
+  >   added content elsewhere in the file untouched
+  > - **Keep as is** — cancel, don't touch the file"
+- Wait for explicit confirmation before continuing.
+  - **Keep as is** → stop here. Do not modify `~/AGENTS.md`.
 
-Save using the format below. Fill the adapter table and skills index from the scan in step 3 — do NOT hardcode.
+**5. Generate `~/AGENTS.md`**
 
-**5. Check if a pointer file is needed**
-- After writing `~/AGENTS.md`, check if your agent reads a different startup file by default
-  (some agents use a different filename as their entry point).
-- If yes and that file doesn't exist yet:
-  - If you can create a symlink to `~/AGENTS.md`: do so.
-  - If not: create the file with content: `👉 Read ~/AGENTS.md`
+Save using the format below, applying the mode chosen in step 4 (fresh build, full overwrite,
+or targeted merge). Fill the adapter table and skills index from the scan in step 3 — do NOT hardcode.
 
-**6. Always-active rules (optional)**
+**6. Wire entry-point pointer**
+- Read the active adapter's `Native Init Behavior` block: `native_entry_files.global` and
+  `reconciliation_policy`. If the adapter doesn't declare this block, fall back to: check if
+  your agent reads a different startup file by default, using best knowledge of your own runtime.
+- **Entry file doesn't exist yet** → create it as a pointer-guarded file (or symlink to
+  `~/AGENTS.md` if supported):
+  > "👉 Global rules: `~/AGENTS.md`. Do not add content directly here — run
+  > `AGENTS.global.template.md` instead."
+- **Entry file exists with real content** (not just a pointer — e.g. from native init or hand
+  edits) → this means `reconciliation_policy: migrate-after-run` applies. Extract anything
+  useful into `~/AGENTS.md` (e.g. as a manual note under the relevant section), then convert
+  the entry file to the same pointer-guarded content above.
+- If `reconciliation_policy: not-applicable` → skip this step.
+
+**7. Always-active rules (optional)**
 
 - If step 3 returns zero skills AND this is a first-time build → skip this step entirely.
 
@@ -67,19 +93,18 @@ Save using the format below. Fill the adapter table and skills index from the sc
 - If there are no new skills, or none look suitable → skip silently, don't ask the user.
 
 **Where to write it:**
-- If the active adapter (from step 3) has a native mechanism → write/append there, following
-  that adapter's declared path & format.
+- If the active adapter's `Native Always-Active Mechanism` has `supported: yes` → write/append
+  to the path declared in `mechanism`, following the schema noted in `format`.
 - Otherwise → write/append to `~/ALWAYS.md`. If that file already exists, show its contents
-  and confirm append vs. replace first (mirror the pattern used for `~/AGENTS.md` in step 1).
+  and confirm append vs. replace first (mirror the pattern used for `~/AGENTS.md` in step 4).
 
-**6b. Wire the pointer into `~/AGENTS.md`**
-- Only relevant when step 6's target was the generic `~/ALWAYS.md` fallback. If the rules were
-  routed to a native mechanism, do NOT add a "read now" instruction — just an informational
-  note, since the native mechanism is already auto-loaded by the tool itself, outside the
-  AGENTS.md read path.
-- Insert point STAYS: after `## No adapter for you yet?`, before `## Skills Index` — for both
-  first build and later patching. (Replaces the old "insert before `## Memory`" instruction,
-  which was in the wrong position.)
+**8. Wire the always-active pointer into `~/AGENTS.md`**
+- Only relevant when step 7's target was the generic `~/ALWAYS.md` fallback. If the rules were
+  routed to a native mechanism (`supported: yes`), do NOT add a "read now" instruction — just
+  an informational note, since the native mechanism is already auto-loaded by the tool itself,
+  outside the AGENTS.md read path.
+- Insert point: after `## No adapter for you yet?`, before `## Skills Index` — for both first
+  build and later patching.
 
 Generic fallback:<br>
 ```bash
@@ -92,8 +117,9 @@ to any request this session.
 Native fallback (informational only, not an executable instruction):<br>
 ```bash
 ## Always-Active Rules
-This agent uses <AgentName>'s native steering/hooks mechanism for always-active rules —
-see `~/.ai/adapters/<agent-name>.md` for location and format. Not routed through this file.
+This agent uses <AgentName>'s native always-active mechanism for these rules — see
+`~/.ai/adapters/<agent-name>.md` (Native Always-Active Mechanism block) for location and
+format. Not routed through this file.
 ```
 
 ### Tip: Custom install path
@@ -151,7 +177,7 @@ Save to `~/.ai/adapters/<agent-name>.md`.
 
 ## Always-Active Skills
 
-<!-- Include this section ONLY if ~/ALWAYS.md was actually created in step 6/6b.
+<!-- Include this section ONLY if ~/ALWAYS.md was actually created in step 7/8.
      Omit it entirely if no always-active skills were selected or if step 3 found zero skills. -->
 If `~/ALWAYS.md` exists, read it now and load every skill listed in it before responding
 to any request this session.
@@ -181,7 +207,7 @@ files — read on request only, no auto-injection.
 <br>
 <br>
 
-## `~/ALWAYS.md` format *(for step 6 — save to `~/ALWAYS.md`, not to `~/AGENTS.md`)*
+## `~/ALWAYS.md` format *(for step 7 — save to `~/ALWAYS.md`, not to `~/AGENTS.md`)*
 
 ```markdown
 ## Always-Active Skills
@@ -194,4 +220,4 @@ of every session — not gated behind a trigger phrase match.
 | `<id>` | `~/.ai/skills/<id>.md` |
 ```
 
-List only the skills the user selected in step 6. One row per skill.
+List only the skills the user selected in step 7. One row per skill.
