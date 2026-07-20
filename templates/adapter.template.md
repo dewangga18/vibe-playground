@@ -80,8 +80,10 @@ Skills index and trigger patterns live in your global agent instructions file �
 - supported: `<yes/no>`
 - mechanism: `<e.g. hooks config at .agent/hooks.json, steering docs at .agent/steering/*.md, or: none>`
 - format: `<brief note on expected format/schema, or: n/a>`
-- If `supported: no` → always-active rules for this agent fall back to `~/ALWAYS.md`
-  (read via the pointer set up in step 5 above).
+- If `supported: no` → always-active rules for this agent fall back to `~/ALWAYS.md`, reached
+  indirectly: the pointer set up in step 5 points to the global instructions file
+  (`~/AGENTS.md`), which itself points to `~/ALWAYS.md` in its "Always-Active Skills" section
+  (see `AGENTS.global.template.md` step 8) — not a direct pointer to `~/ALWAYS.md`.
 
 ## Session Access *(omit if not applicable)*
 - Transcript location: `<path pattern>`

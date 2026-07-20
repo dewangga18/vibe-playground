@@ -187,7 +187,7 @@ Templates in `~/.ai/templates/` are prompt instructions for generating standard 
 | `AGENTS.local.template.md` | `./AGENTS.md` | Project-specific instructions — stack, commands, gotchas |
 | `README.template.md` | `./README.md` | Project README from codebase scan |
 | `adapter.template.md` | `~/.ai/adapters/<agent>.md` | New agent adapter |
-| `standar.template.md` | `~/.ai/standards/<stack>.md` | Per-stack coding standards |
+| `standard.template.md` | `~/.ai/standards/<stack>.md` | Per-stack coding standards |
 
 > **Note:** All templates hardcode `~/.ai/`. See [$AI_HOME & Custom Path](#ai_home--custom-path) if you rename the directory.
 

@@ -94,11 +94,17 @@ or targeted update). Keep it ~50 lines — only what an agent can't infer from t
 **6. Wire project-level pointer**
 - Check the native entry file for this project (per adapter's `native_entry_files.project`,
   e.g. `./CLAUDE.md`).
-- If it doesn't exist yet → create it as a pointer-guarded file:
+- This file auto-loads every session in this project — creating or overwriting it needs
+  confirmation first, same as the global version in `AGENTS.global.template.md` step 6.
+- **Already exists as a correct pointer** → nothing to do, skip silently.
+- **Doesn't exist yet** → ask for approval, then create it as a pointer-guarded file:
+  > "I'd like to create `<entry file>` so `<agent>` auto-loads `./AGENTS.md` for this project.
+  > It'll just be a pointer — no content lives there directly. OK to create it?"
   > "👉 Project rules: `./AGENTS.md`. Do not add content directly here — run
   > `AGENTS.local.template.md` instead."
-- If it exists with real content → that means it was already consumed as the source in step 2.
-  Convert it to the same pointer-guarded content now.
+- **Exists with real content** → that means it was already consumed as the source in step 2.
+  Show what was extracted and confirm before converting it to the pointer-guarded content
+  above — this replaces existing content.
 - If no native mechanism is declared for this adapter → skip this step entirely.
 
 ### Tip: Custom install path

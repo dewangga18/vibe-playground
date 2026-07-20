@@ -29,14 +29,18 @@ Generate or update the global agent instructions file at `~/AGENTS.md`.
 **3. Scan available assets**
 - Adapters: `ls ~/.ai/adapters/*.md` — collect agent names from filenames.
 - Skills: `ls ~/.ai/skills/*.md` — read frontmatter `name`, `description`, first heading.
-- If `~/AGENTS.md` already exists (from step 1) and has `## Tool Adapters` / `## Skills Index`
-  tables, diff the freshly scanned adapters and skills against what's already recorded.
-  Items that appear now but weren't recorded = **new**. Items recorded but no longer found =
-  **removed**.
 - Identify the currently active adapter (`~/.ai/adapters/<agent-name>.md`). Read its
   `Native Always-Active Mechanism` block (`supported`, `mechanism`, `format`).
   - If `supported: no`, or the adapter doesn't declare this block, or no adapter exists yet →
     fall back to `~/ALWAYS.md`.
+- If `~/AGENTS.md` already exists (from step 1) and has `## Tool Adapters` / `## Skills Index`
+  tables, diff the freshly scanned adapters and skills against what's already recorded.
+  For skills specifically: before diffing, also read the always-active source identified
+  above (`~/ALWAYS.md`, or the native mechanism's file if `supported: yes`), if it exists, and
+  treat any skill listed there as already recorded too — it's intentionally omitted from the
+  Skills Index table (see step 5), not missing. Union both sources, then diff.
+  Items that appear now but weren't recorded in either source = **new**. Items recorded but
+  no longer found = **removed**.
 
 **4. Reconcile with existing file** *(skip entirely if step 1 found no existing `~/AGENTS.md`
 — go straight to step 5 with a fresh build)*
@@ -62,14 +66,22 @@ or targeted merge). Fill the adapter table and skills index from the scan in ste
 - Read the active adapter's `Native Init Behavior` block: `native_entry_files.global` and
   `reconciliation_policy`. If the adapter doesn't declare this block, fall back to: check if
   your agent reads a different startup file by default, using best knowledge of your own runtime.
-- **Entry file doesn't exist yet** → create it as a pointer-guarded file (or symlink to
-  `~/AGENTS.md` if supported):
+- This step creates or modifies a file that auto-loads every session, including unrelated
+  projects — the same category of action `adapter.template.md` step 5 requires explicit
+  approval for. Never create or overwrite it silently; always confirm first.
+- **Entry file already exists as a correct pointer** → nothing to do, skip silently.
+- **Entry file doesn't exist yet** → ask for approval, then create it as a pointer-guarded
+  file (or symlink to `~/AGENTS.md` if supported):
+  > "I'd like to create `<entry file>` so `<agent>` auto-loads `~/AGENTS.md` every session.
+  > It'll just be a pointer — no content lives there directly. OK to create it?"
   > "👉 Global rules: `~/AGENTS.md`. Do not add content directly here — run
   > `AGENTS.global.template.md` instead."
 - **Entry file exists with real content** (not just a pointer — e.g. from native init or hand
-  edits) → this means `reconciliation_policy: migrate-after-run` applies. Extract anything
-  useful into `~/AGENTS.md` (e.g. as a manual note under the relevant section), then convert
-  the entry file to the same pointer-guarded content above.
+  edits) → this means `reconciliation_policy: migrate-after-run` applies. Show the user what
+  will be extracted into `~/AGENTS.md` and ask for confirmation before overwriting the entry
+  file — it holds existing, possibly hand-written content that this step would replace. Only
+  after approval: extract anything useful into `~/AGENTS.md` (e.g. as a manual note under the
+  relevant section), then convert the entry file to the pointer-guarded content above.
 - If `reconciliation_policy: not-applicable` → skip this step.
 
 **7. Always-active rules (optional)**
@@ -84,9 +96,13 @@ or targeted merge). Fill the adapter table and skills index from the scan in ste
 - Wait for the user's input. If nothing is selected/provided → skip, don't create any file.
 
 *Regenerate with new skills* (`~/AGENTS.md` already exists, step 3 found new skills):
-- Do NOT re-ask about skills that were already recorded.
-- For each new skill, the agent analyzes its frontmatter/description/trigger: does it look
-  suitable for always-on application (broad, context-independent) vs. narrow/trigger-based?
+- Do NOT re-ask about skills that were already recorded — "recorded" means listed in the
+  Skills Index table OR already present in the always-active source (`~/ALWAYS.md` or native
+  mechanism), per the union check in step 3. A skill promoted to always-active in a prior run
+  must never resurface here as "new".
+- For each genuinely new skill, the agent analyzes its frontmatter/description/trigger: does
+  it look suitable for always-on application (broad, context-independent) vs.
+  narrow/trigger-based?
 - If at least one looks suitable → ask the user, showing ONLY those candidates:
   > "The new skill `<name>` looks like it should be applied on every request (because
   > `<reason>`). Add it to the always-active rules?"
@@ -105,6 +121,11 @@ or targeted merge). Fill the adapter table and skills index from the scan in ste
   outside the AGENTS.md read path.
 - Insert point: after `## No adapter for you yet?`, before `## Skills Index` — for both first
   build and later patching.
+- Also patch the Skills Index table generated in step 5: for every skill just added to the
+  always-active source in this step, remove its full row and replace it with the footnote
+  line described in the Skills Index template (`` `<name>` — always-active, see ~/ALWAYS.md ``,
+  or the native mechanism's file). Step 5 runs before step 7's decisions exist, so this table
+  needs the same-run patch to stay consistent.
 
 Generic fallback:<br>
 ```bash
@@ -148,9 +169,9 @@ Read this file at the start of every session. After reading:
 - **No `./AGENTS.md` in project root** → generate one before starting work:
   tell the user and offer to run `~/.ai/templates/AGENTS.local.template.md`.
 - **Stack detected but no `~/.ai/standards/<stack>.md`** → offer to create one:
-  > "No standards found for `<stack>`. Generate from `~/.ai/templates/standar.template.md`?"
+  > "No standards found for `<stack>`. Generate from `~/.ai/templates/standard.template.md`?"
   Wait for user confirmation before proceeding.
-  - If `~/.ai/templates/standar.template.md` exists → run it to generate the file.
+  - If `~/.ai/templates/standard.template.md` exists → run it to generate the file.
   - If not → check if a `vibe-playground/` clone is available and offer to copy the template from there.
   - If neither → ask the user to provide stack conventions or rules to follow, then generate
     `~/.ai/standards/<stack>.md` from that context directly.
@@ -184,7 +205,11 @@ to any request this session.
 
 ## Skills Index
 
-<!-- FILL from ~/.ai/skills/*.md scan — one row per file -->
+<!-- FILL from ~/.ai/skills/*.md scan — one row per file, EXCEPT skills already listed in
+     ~/ALWAYS.md's Always-Active Skills table (or the native always-active mechanism, if
+     supported: yes). Those already load every session — a trigger-based row for them is
+     redundant and misleading. For those, add one footnote line instead of a full row:
+     "`<name>` — always-active, see ~/ALWAYS.md" (or the native mechanism's file). -->
 | Skill | Trigger pattern | Description | File |
 |---|---|---|---|
 | `<name>` | `<example phrases that should load this skill>` | `<one-line description>` | `~/.ai/skills/<name>.md` |
