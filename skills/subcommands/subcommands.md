@@ -1,13 +1,6 @@
 ---
 name: subcommands
-description: >
-  Sync skills to native custom commands in Kiro, OpenCode, and Freebuff —
-  without ever duplicating skill body content. Supports four source modes:
-  default scan of ~/.ai/skills/, custom path (-path=), direct GitHub fetch
-  (-github=), and pasted markdown (-md=). Discovers skills, detects which
-  agent you're in, diffs against what's already integrated, and generates
-  missing pointer files on confirmation. Includes a general fallback
-  procedure for any other CLI agent not explicitly covered.
+description: Sync skills to native custom commands via pointer files.
 ---
 
 # Subcommands Sync
@@ -24,159 +17,103 @@ Kiro/OpenCode/Freebuff pointing at the single source of truth in
 -md=<markdown>    Use pasted markdown content as the skill source
 ```
 
-All params are optional. Default behavior (no params) scans `~/.ai/skills/`.
-Each param adds one skill to the sync queue, then falls back to the default
-scan for the rest. Multiple params can be combined in one invocation.
+All params optional. Default: scan `~/.ai/skills/`. Each param adds one skill to sync queue then falls back to default scan. Multiple params can be combined.
 
 ## Canonical identity rule
 
-**Skill identity = filename, not frontmatter.** For `~/.ai/skills/grademe.md`,
-the skill id is `grademe`. Frontmatter `name:`/`description:` may be missing
-or inconsistent in some files — never trust it as the primary key for
-Kiro or OpenCode. The one exception is Freebuff, covered below, where
-frontmatter `name:` is a hard requirement of Freebuff itself, not a choice
-made by this sync tool.
+**Skill identity = filename, not frontmatter.**
+- `~/.ai/skills/grademe.md` → id = `grademe`
+- Frontmatter `name:`/`description:` may be missing/inconsistent — never trust as primary key for Kiro or OpenCode.
+- **Exception:** Freebuff requires frontmatter `name:` (its own requirement, not our choice).
 
 ## When to stop and ask
 
-This skill is not allowed to guess its way through ambiguity. Pause and
-get explicit user approval before writing, deleting, or overwriting
-anything whenever:
+**Pause + get user approval** before writing/deleting/overwriting when:
+- **Case not explicitly covered** — e.g. partial agent match, scan error, broken frontmatter, agent behavior outside General fallback.
+- **Multiple valid options exist** — e.g. two plausible targets, id collision, agent with two command styles.
 
-- **A case isn't explicitly covered** by this file — e.g. a directory
-  structure that partially matches two known agents, a scan command that
-  errors out instead of returning a clean list, a skill file with broken
-  or unparseable frontmatter, an agent whose docs describe something that
-  doesn't fit either outcome in the General fallback.
-- **More than one valid option exists** — e.g. two plausible target
-  locations, a skill id that collides with a command that already exists
-  through some other mechanism, an agent that supports two different
-  native command styles.
-
-When this happens: state plainly what was found, list the option(s) —
-even if only one exists and it just needs confirming — and wait for the
-user's answer before taking any write action. Never silently pick the
-option that looks safest or most likely; surface it instead. This applies
-at every step below, not just Step 5.
+**Action:** State what was found, list option(s), wait for answer. Never silently pick the safest-looking option. Applies at every step.
 
 ## Step 1 — Discover
 
-Resolve the skill source(s) using this priority chain. All resolved skills
-feed into a single list for Step 2 onward.
+Resolve skill source(s) via priority chain. All resolved skills feed into single list for Step 2+.
 
 ### Mode A — Default: scan `~/.ai/skills/`
 
-No params given, or as the fallback after any failed mode below.
+No params, or fallback after failed mode.
 
-List `~/.ai/skills/*.md`. For each file:
+List `~/.ai/skills/*.md`. Per file:
 - `id` = filename without `.md`
-- `description` = value of frontmatter `description:` if present, otherwise
-  leave blank — never fabricate one.
+- `description` = frontmatter `description:` if present (never fabricate)
 
-If the directory is missing or empty → stop, inform the user, ask them to
-either populate `~/.ai/skills/` or provide a source via one of the params
-below.
+Directory missing/empty → stop, inform user, ask to populate or provide source via params.
 
 ### Mode B — Custom path: `-path=<dir>`
 
-Scan `<dir>/*.md` instead of `~/.ai/skills/`. Apply the same id/description
-extraction as Mode A.
+Scan `<dir>/*.md` instead. Same id/description extraction as Mode A.
 
-Validation before scanning:
-- Directory must exist and be readable.
-- Must contain at least one `.md` file.
-
-If validation fails → report the error and fall back to Mode A.
+**Validation:** Directory must exist, be readable, contain ≥1 `.md` file. Fail → report error, fall back to Mode A.
 
 ### Mode C — GitHub fetch: `-github=<url>`
 
-Fetch a single skill file directly from a GitHub raw URL. No clone needed.
+Fetch single skill from GitHub raw URL. No clone needed.
 
-Expected URL format:
-```
-https://raw.githubusercontent.com/<user>/<repo>/<branch>/path/to/<name>.md
-```
+URL format: `https://raw.githubusercontent.com/<user>/<repo>/<branch>/path/to/<name>.md`
 
-Steps:
-1. Validate: URL must end in `.md` and be reachable (HTTP 200). If not →
-   report error and fall back to Mode A.
-2. Fetch the file content.
-3. Derive `id` from the filename in the URL (last path segment, no `.md`).
-4. Extract `description` from frontmatter if present; otherwise leave blank.
-5. Ask user: *"Save fetched skill as `~/.ai/skills/<id>.md`?"*
-   - If yes → write file, then include `<id>` in the sync queue.
-   - If no → include `<id>` in the sync queue using the fetched content
-     in-memory only (not saved to disk). Note this in the Step 6 report.
+**Steps:**
+1. Validate: URL ends in `.md`, HTTP 200. Fail → report, fall back to Mode A.
+2. Fetch content.
+3. `id` = filename from URL (last segment, no `.md`).
+4. `description` = frontmatter `description:` if present.
+5. Ask: "Save fetched skill as `~/.ai/skills/<id>.md`?"
+   - Yes → write file, include in sync queue.
+   - No → in-memory only (note in Step 6 report).
 
-After processing the `-github=` skill, continue with Mode A for remaining
-skills already in `~/.ai/skills/`.
+After `-github=` skill, continue with Mode A for remaining skills.
 
 ### Mode D — Pasted markdown: `-md=<content>`
 
-User provides raw markdown content inline.
+User provides raw markdown inline.
 
-Steps:
-1. If frontmatter is present:
-   - Use `name:` field as `id` (if present and valid).
-   - Use `description:` field as description (if present).
-2. If frontmatter is absent or `name:` is missing:
-   - Use the first `# Heading` as `id` (slugified: lowercase, spaces → `-`,
-     strip special chars).
-   - Leave description blank.
-3. Ask user to confirm the resolved `id` before proceeding.
-4. Ask user: *"Save as `~/.ai/skills/<id>.md`?"*
-   - If yes → write file, then include `<id>` in the sync queue.
-   - If no → include in sync queue using in-memory content only.
+**Steps:**
+1. Frontmatter present? Use `name:` as `id` + `description:` as description.
+2. Frontmatter absent or `name:` missing? `id` = first `# Heading` (slugified: lowercase, spaces→`-`, strip special chars). Description blank.
+3. Confirm resolved `id` with user.
+4. Ask: "Save as `~/.ai/skills/<id>.md`?" Same handle as Mode C (write vs in-memory).
 
-After processing the `-md=` skill, continue with Mode A for remaining
-skills already in `~/.ai/skills/`.
+After `-md=` skill, continue with Mode A for remaining.
 
----
 
 ## Step 2 — Detect target agent
 
-Check cwd for markers, in this order:
-- `.kiro/` present → **Kiro**
-- `.opencode/` or `opencode.json` present → **OpenCode**
-- `.agents/` present → **Freebuff**
-- None of the above → **General / unlisted agent**, follow the fallback
-  procedure in Step 5 instead of the three named ones.
+Check cwd for markers (order matters):
+- `.kiro/` → **Kiro**
+- `.opencode/` or `opencode.json` → **OpenCode**
+- `.agents/` → **Freebuff**
+- None → **General / unlisted agent** (fallback in Step 5)
 
-If multiple markers exist, ask the user which one to sync for — don't
-guess. If none match, don't just stop and ask "which agent?" either; you
-already know which agent you *are* (you're running inside it) — proceed to
-the General fallback below, which works for any agent without needing a
-name-specific branch.
+Multiple markers? Ask user which to sync. None match? You already know which agent you *are* — proceed to General fallback.
 
 ## Step 3 — Scan what's already integrated
 
-Detection method is different per agent — this is not optional, each one
-genuinely works differently:
+Detection differs per agent (not optional — each works differently):
 
 **Kiro** (global, home dir):
 ```
-grep -oP '(?<=~/.ai/skills/)[\w-]+(?=\.md)' ~/.kiro/prompts/*.md
+grep -oP '(?<=~/.ai/skills/)[\\w-]+(?=\\.md)' ~/.kiro/prompts/*.md
 ```
-Any id found here is already integrated, globally, for every repo.
+Also check `@id` registrations from `/prompts create`. If id appears as BOTH file in `~/.kiro/prompts/` AND `/prompts create` entry → flag as duplicate to clean up.
 
-Also check for leftover `@id`-style registrations from `/prompts create`
-(run `/prompts list` or equivalent). If an id shows up both as a file in
-`~/.kiro/prompts/` **and** as a `/prompts create` entry, flag it as a
-duplicate to clean up — don't just report it as "integrated" and move on.
-
-**OpenCode** (global, home dir — also check the XDG fallback location):
+**OpenCode** (global, home dir + XDG fallback):
 ```
-grep -oP '(?<=~/.ai/skills/)[\w-]+(?=\.md)' ~/.opencode/commands/*.md ~/.config/opencode/commands/*.md 2>/dev/null
+grep -oP '(?<=~/.ai/skills/)[\\w-]+(?=\\.md)' ~/.opencode/commands/*.md ~/.config/opencode/commands/*.md 2>/dev/null
 ```
-Same as Kiro: global, applies to every repo.
+Global, same as Kiro.
 
-If any scan command errors (permission denied, directory missing in an
-unexpected way, malformed file that can't be grepped cleanly) — don't
-treat that as "zero results, nothing integrated." That's an unhandled
-case per the section above; report the error and ask before assuming
-anything about integration status.
+Scan errors (permission denied, missing dir, malformed file) → **don't** treat as "zero integrated". Report error and ask.
 
 **Freebuff** (global `~/.agents/skills/` only):
+Global, all repos. Single source of truth — no per-repo integration.
 ```
 for d in ~/.agents/skills/*/; do
   [ -d "$d" ] || continue
@@ -185,22 +122,12 @@ for d in ~/.agents/skills/*/; do
   [ "$target" = "$HOME/.ai/skills/${name}.md" ] && echo "$name"
 done
 ```
-Freebuff skills are installed globally at `~/.agents/skills/` and apply to all repos. This is the single source of truth — no per-repo integration.
 
 **General / unlisted agent:**
-There's no known file location to grep yet, so check for evidence in two
-places instead:
-1. Does the agent have its own documented custom-command mechanism at
-   all? Check its own `--help`, docs, or config schema for terms like
-   "custom command", "slash command", "prompt template", "custom agent".
-2. If yes, has it already been used for any `~/.ai/skills/` id? Search
-   wherever that mechanism stores its definitions (ask the agent's own
-   tooling to list existing commands, then check each one's body for a
-   `~/.ai/skills/<id>.md` reference — same idea as the grep used for
-   Kiro/OpenCode, just against an unknown file layout).
-If there's no discoverable custom-command mechanism at all, every skill in
-`~/.ai/skills/` counts as "not yet integrated as a command" — but that
-doesn't mean unusable, see Step 5.
+No known file location. Check:
+1. Does agent have a custom-command mechanism? Check `--help`, docs, config for "custom command", "slash command", etc.
+2. Has any `~/.ai/skills/` id been registered? Ask agent's tooling to list commands, check each body for `~/.ai/skills/<id>.md` reference.
+No mechanism found? Skills count as "not yet integrated" — but not unusable (see Step 5).
 
 ## Step 4 — Diff
 
@@ -210,15 +137,9 @@ anything else.
 
 ## Step 5 — Generate (only after user confirms)
 
-Never write files silently. Show the list from step 4, ask which ones (or
-"all"), then generate:
+Never write silently. Show list from step 4, ask which to generate.
 
-Before writing any file: if a file already exists at that exact path
-(even if Step 3 didn't recognize it as a skill pointer — e.g. it's a
-hand-written command with different content), that's a collision, not a
-routine overwrite. Show the existing content, ask whether to replace it,
-skip it, or merge — don't overwrite by default just because generation
-was approved for the id in general.
+**Collision check:** if file exists at target path (even if Step 3 didn't recognize it) → show content, ask replace/skip/merge. Don't overwrite by default.
 
 ### Kiro → `~/.kiro/prompts/<id>.md`
 
@@ -286,38 +207,18 @@ ln -sf ~/.ai/skills/<id>.md ~/.agents/skills/<id>/SKILL.md
 ```
 Invoke: `/skill:<id>`
 
-### General / unlisted agent → figure out the mechanism, don't invent syntax
+### General / unlisted agent → don't invent syntax
 
-Two possible outcomes, don't skip straight to the second:
+Two outcomes (don't skip to #2):
+1. **Has native custom-command mechanism** (found in Step 3). Same pointer principle as named agents: short file whose body is "read `~/.ai/skills/<id>.md` verbatim." Use *that agent's own docs* for file format/location/invocation. Never guess syntax — verify against docs or `--help`.
+2. **No native mechanism.** Fall back to reactive skill loading: agent reads `~/.ai/skills/<id>.md` on demand when user's natural-language request matches. Report that no persistent command surface exists.
 
-1. **The agent has some native custom-command mechanism** (found in Step
-   3). Follow the exact same pointer principle as the three named agents —
-   a short file/entry whose entire body is "read `~/.ai/skills/<id>.md`
-   and follow it verbatim, do not paraphrase," using whatever file format,
-   location, and invocation syntax *that agent's own documentation*
-   specifies. Never guess the syntax (`/name` vs `@name` vs something
-   else) — verify against that agent's actual docs or `--help` output
-   first, the same way the Freebuff `.ts` assumption earlier turned out
-   wrong until checked against real behavior.
-
-2. **No native custom-command mechanism exists.** Don't force one. Fall
-   back to reactive skill loading instead: rely on the agent recognizing
-   the user's natural-language request (e.g. "grade my session") and
-   reading the matching `~/.ai/skills/<id>.md` on demand — the same
-   fallback already described in the root `AGENTS.md`. Report to the user
-   that this agent has no persistent command surface, so skills here are
-   invoked by describing what you want, not by a fixed command name.
-
-Either way, report back which outcome applies — don't silently assume
-outcome 2 just because outcome 1 takes more digging.
+Report which outcome applies — don't silently assume #2.
 
 ## Step 6 — Report
 
-Summarize per agent: created / already-integrated / blocked (with reason).
-If the user declined to generate everything, list what's still pending so
-it's easy to re-run later.
-For skills added via `-github=` or `-md=` that were not saved to disk,
-note that they are in-memory only and will not persist across sessions.
+Summarize per agent: created / already-integrated / blocked (with reason). List pending items if user declined to generate all.
+For `-github=` or `-md=` skills not saved to disk: note they're in-memory only (won't persist).
 
 ## Never do
 

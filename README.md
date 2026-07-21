@@ -113,10 +113,10 @@ Skills are flat `.md` files in `~/.ai/skills/`. The Skills Index in `~/AGENTS.md
 
 | Skill | Trigger | Description |
 |---|---|---|
-| `grademe` | "grade me", "grade this session" | Grades the user's vibe-coding practice from a session transcript against a 7-dimension rubric. Outputs JSON + narrative. |
-| `submit-grade` | "submit grade", "upload grade" | Uploads graded results to the vibescore leaderboard. Requires API credentials. |
-| `report-by-git-changes` | "report changes", "changelog" | Generates a concise changelog-style report from current git diff or a specific commit. |
-| `subcommands` | "sync skills", "sync subcommands", "/subcommands" | Syncs skills in `~/.ai/skills/` to native custom commands in Kiro, OpenCode, and Freebuff. Supports `-path=`, `-github=`, and `-md=` params for custom sources. |
+| `grademe` | "grade me", "grade this session" | Grades vibe-coding from a session transcript against a 7-dimension rubric. Outputs JSON + narrative. |
+| `submit-grade` | "submit grade", "upload grade" | Uploads graded session to the vibescore leaderboard. Requires API credentials. |
+| `report-by-git-changes` | "report changes", "changelog" | Generates changelog-style reports from git diff or a specific commit. |
+| `subcommands` | "sync skills", "sync subcommands", "/subcommands" | Syncs skills to native custom commands via pointer files. |
 
 ## Adapters
 
@@ -187,7 +187,7 @@ Templates in `~/.ai/templates/` are prompt instructions for generating standard 
 | `AGENTS.local.template.md` | `./AGENTS.md` | Project-specific instructions — stack, commands, gotchas |
 | `README.template.md` | `./README.md` | Project README from codebase scan |
 | `adapter.template.md` | `~/.ai/adapters/<agent>.md` | New agent adapter |
-| `standard.template.md` | `~/.ai/standards/<stack>.md` + `~/.ai/standards/<stack>/` | Per-stack coding standards — split into index + per-topic section files, loaded on trigger match |
+| `standard.template.md` | `~/.ai/standards/<stack>/index.md` + `~/.ai/standards/<stack>/parts/**` | Per-stack coding standards — split into index + per-topic section files, loaded on trigger match |
  
  > **Note:** All templates hardcode `~/.ai/`. See [$AI_HOME & Custom Path](#ai_home--custom-path) if you rename the directory.
  

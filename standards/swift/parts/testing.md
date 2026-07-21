@@ -38,5 +38,5 @@ struct LoginTests {
    - **`PRODUCT_NAME`:** one consistent value across configs (`TEST_HOST` resolves against this). `PRODUCT_BUNDLE_IDENTIFIER` legitimately varies per environment — that's fine, don't flag it.
    - **`TEST_HOST`:** dynamic via `$(APP_NAME)`/`$(PRODUCT_NAME)`, never hardcoded.
    - **`ENABLE_TESTABILITY = YES`:** on the app target's Debug config, or `@testable import` can't see `internal` members.
-3. Always `@testable import <AppModule>`, never plain `import` — "cannot find X in scope" on an internal symbol means the import or step 2's testability setting is wrong.
-4. Run via `xcodebuild test -scheme "<Scheme>" -destination "..."` — this is an `.xcodeproj` app, not pure SPM; bare `swift test` won't work.
+3. Always `@testable import <AppModule>`, never plain `import` — "cannot find X in scope" means the import or step 2's testability setting is wrong.
+4. Run via `xcodebuild test -scheme "<Scheme>" -destination "..."` — `.xcodeproj` app, not pure SPM; `swift test` won't work.

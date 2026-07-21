@@ -8,115 +8,66 @@ Generate a **split** coding standards set for a specific tech-stack:
 
 **1. Detect the stack**
 - Manual trigger: user names the stack (e.g. "buat standar untuk React").
-- Auto trigger: scan the codebase for stack indicators (`package.json`, `go.mod`, `Cargo.toml`, `requirements.txt`, `pyproject.toml`, etc.).
-- If uncertain, ask the user to confirm before proceeding.
+- Auto trigger: scan codebase for stack indicators (`package.json`, `go.mod`, `Cargo.toml`, etc.).
+- If uncertain, ask user to confirm.
 
 **2. Detect scope**
-- **Stack named only** (e.g. "create standard for Go", "buat standar untuk React") → full
-  scope. Step 5 generates the whole baseline (+ stack-specific sections).
-- **Specific topic named** (e.g. "create testing standard for Swift", "buat DI convention untuk
-  Go") → scoped to that one section, even on a first-time build with no existing index yet.
-  Still create the index file (step 8), just with a single row in its Sections table — do not
-  pad it out with the rest of the baseline just because the index is new.
-- If ambiguous which topic is meant, ask before proceeding rather than guessing.
+- **Stack named only** → full scope. Step 5 generates whole baseline + stack-specific sections.
+- **Specific topic named** (e.g. "create testing standard for Swift") → scoped to one section. Still create index (step 8) with single row in Sections table — don't pad with baseline.
+- If ambiguous, ask.
 
 **3. Detect locale**
-- Default: `en`. Use this unless the request signals otherwise.
-- Explicit signal (e.g. the request is phrased in Indonesian, or names a language directly) →
-  use that locale instead.
-- If step 4 finds an existing index for this stack → match the locale already recorded there
-  (see the `<!-- locale: -->` marker in the index format below), regardless of what language
-  this particular request happens to be phrased in. Don't let one mixed-language request fork
-  a stack's standards into two languages.
-- If the detected locale conflicts with what's already recorded, ask which to use rather than
-  guessing.
-- This only affects prose in the generated output — bullets, descriptions, one-line summaries.
-  Structural markers (`# Standards —`, `## Core Rules`, `## Sections`, `## Do`, `## Don't`,
-  `## Commands`, `## Notes`, table headers, file paths, code/commands) stay exactly as written
-  in the formats below regardless of locale — the agent parses them (e.g. the `## Sections`
-  table check in step 4), and they need to stay consistent across every stack and language.
+- Default: `en`. Explicit signal (e.g. Indonesian request) → use that locale.
+- Existing index for this stack → match its `<!-- locale: -->` marker, ignore request language — don't fork standards into two languages.
+- Conflict? Ask.
+- Locale only affects prose (bullets, descriptions). Structural markers (`# Standards —`, `## Core Rules`, `## Sections`, `## Do`, `## Don't`, `## Commands`, table headers, file paths, code) stay in English — the agent parses them.
 
 **4. Check for existing file**
 - Check `~/.ai/standards/<tech-stack>/index.md`.
 - **Doesn't exist** → first-time build. Skip to step 5.
-- **Exists with a `## Sections` table** → index already exists. Show the current section
-  list and ask:
+- **Exists with `## Sections` table** → index already exists. Show section list and ask:
   > "Standards for `<tech-stack>` already exist (`<N>` sections: `<list>`). What would you like to do?
   > - **Add section(s)** — keep everything, add new ones (tell me which topics)
-  > - **Refresh a section** — re-run the web search for one existing section only, replace just that file
+  > - **Refresh a section** — replace just that file
   > - **Regenerate all** — discard everything, full fresh rebuild
-  > - **Keep as is** — cancel, don't touch anything"
-  - Wait for explicit choice before continuing. Scope steps 5-8 to only what was chosen
-    (e.g. "Add section(s)" only generates the new section(s); it does not touch existing files).
-  - This choice and step 2's scope both narrow the same thing (which sections get touched) —
-    if they conflict (e.g. step 2 said "testing only" but the user picks "Regenerate all" here),
-    the more specific/recent instruction wins; when unclear, ask.
-- **Exists but no `## Sections` table** → not a valid standards index. Ask whether to
-  overwrite or skip, then continue accordingly.
+  > - **Keep as is** — cancel"
+  - Wait for choice. Scope steps 5-8 to only what was chosen.
+  - If step 2's scope conflicts (e.g. "testing only" but user picks "Regenerate all"), the more specific/recent wins; when unclear, ask.
+- **Exists but no `## Sections` table** → not a valid index. Ask whether to overwrite or skip.
 
 **5. Determine sections**
-- If step 2 found a **specific topic** → this step is just that one section (plus, if the topic
-  is `dependencies`, no baseline padding). Skip the rest of this step.
-- Otherwise (**full scope**), baseline candidates — include whichever genuinely apply to this
-  stack, skip what doesn't:
-  - `structure` — file/folder organization, naming conventions
-  - `testing` — testing patterns, frameworks, conventions
-  - `dependency-injection` — DI conventions (skip for stacks with no DI concept)
-  - `dependencies` — approved libraries + install/add/update commands
-- Add one or two stack-specific sections beyond the baseline where the stack genuinely needs
-  them — e.g. **State Management** (React/Flutter), **Concurrency** (Go/Rust/Swift),
-  **Error Handling** (Go/Rust/Node.js), **Security** (Express/Django/Rails).
-- If step 4 chose "Add section(s)" or "Refresh a section", this step only covers those specific
-  section(s), not the full baseline.
+- **Specific topic** (step 2) → just that one section. Skip rest.
+- **Full scope** — baseline candidates (include what applies, skip what doesn't):
+  - `structure` — file/folder organization, naming
+  - `testing` — testing patterns, frameworks
+  - `dependency-injection` — DI conventions (skip if N/A for stack)
+  - `dependencies` — approved libraries + install commands
+- Add 1-2 stack-specific sections where genuinely needed (State Management for React/Flutter, Concurrency for Go/Rust/Swift, Error Handling, Security).
+- If step 4 chose "Add section(s)" or "Refresh", only those sections — not full baseline.
 
 **6. Gather source material**
-- Check first: did the user already give rough rules/points for the section(s) in scope —
-  either in this request or earlier in the conversation? If so, that's the primary source.
-  Don't run it through a search-and-override; the user's explicit rule wins.
-  - Still do a light, targeted search per section to fill genuine gaps the user didn't cover,
-    and to sanity-check against strong, widely-adopted convention. If something conflicts,
-    surface the conflict and ask rather than silently picking a side.
-- If no context was given yet, ask once (scoped to whatever sections are in play):
-  > "Ada gambaran kasar soal rule `<section>`-nya, atau langsung aku cari best practice terkini
-  > dari web?"
-  - User shares rough points → treat as user-provided context, same handling as above.
-  - User says search → full web search flow, no user context to anchor against.
-- When searching (whether standalone or filling gaps), search per section separately, not one
-  combined query (e.g. `"<stack> testing best practices <year>"`, then `"<stack> dependency
-  injection patterns"`, etc.) — a combined query returns shallow results for all of them.
-- Prioritize official docs, widely-adopted style guides, and community consensus. Discard
-  opinions without broad adoption.
+- Check if user already gave rules/points for the section(s) in scope. If so, that's the primary source — don't search-and-override. Still do light targeted search per section to fill gaps and sanity-check against convention. Surface conflicts instead of silently picking.
+- No user context given yet? Ask once:
+  > "Ada gambaran kasar soal rule `<section>`-nya, atau langsung aku cari best practice terkini dari web?"
+  - Shares rough points → treat as user-provided context.
+  - Says search → full web search flow.
+- Search per section separately (not one combined query). Prioritize official docs and widely-adopted style guides. Discard opinions without broad adoption.
 
 **7. Generate section files**
-- Save each to `~/.ai/standards/<tech-stack>/parts/<section>.md` using the section
-  format below, written in the locale from step 3.
-- Keep each one short — aim for under 40 lines. Depth is fine when the topic needs it, but
-  padding defeats the point of splitting: cheap, focused reads.
+- Save each to `~/.ai/standards/<tech-stack>/parts/<section>.md` using the section format below, in the locale from step 3.
+- Keep under 40 lines each. Depth is fine when needed; padding defeats splitting.
 
 **8. Generate/update the index file**
-- Save `~/.ai/standards/<tech-stack>/index.md` using the index format below, written in the locale
-  from step 3. Update the `<!-- locale: -->` marker to match.
-- **Core Rules**: 3-5 bullets max — only things so universal they apply no matter what the
-  task is (e.g. required formatter, minimum language version). If nothing qualifies, omit the
-  section entirely; most rules belong in a section file, gated behind a trigger, instead.
-- **Sections table**: one row per file that actually exists after step 7 — for a scoped run
-  (step 2), that means the table only grows by one row; don't add rows for baseline sections
-  that weren't actually generated. Trigger pattern should be realistic phrases from actual
-  requests (e.g. `"add a test"`, `"where should this file go"`), not the section name repeated back.
+- Save `~/.ai/standards/<tech-stack>/index.md` using the index format below, in the locale from step 3. Update `<!-- locale: -->`.
+- **Core Rules**: 3-5 bullets max — only universally applicable rules (formatter, language version). Omit section if nothing qualifies.
+- **Sections table**: one row per file that exists after step 7. Don't add rows for baseline sections not generated. Use realistic trigger phrases (`"add a test"`, not section name repeated).
 
-### Tip: Custom install path
-
-This template uses `~/.ai/` by default. <br>
-If you've set `$AI_HOME` to another location, update all
-`~/.ai/` references after copying:
-
-```bash
-grep -rl '~/.ai/' "$AI_HOME" | xargs sed -i '' "s|~/.ai/|$AI_HOME/|g"
-```
+> **Custom path?** If `$AI_HOME` is set and differs from `~/.ai/`, run:
+> ```bash
+> grep -rl '~/.ai/' "$AI_HOME" | xargs sed -i '' "s|~/.ai/|$AI_HOME/|g"
+> ```
 
 ---
-<br>
-<br>
 
 ## Index file format — `~/.ai/standards/<tech-stack>/index.md`
 

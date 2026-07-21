@@ -1,29 +1,20 @@
 # Adapter — opencode
 
-`~/.ai/` is the single source of truth for reusable skills, memory, and docs.
-Skills index and trigger patterns live in `~/AGENTS.md` — read that first.
-
 ## File Access
-- Read files with: `read` tool, or `glob("~/.ai/skills/*.md")` via the `glob` tool
-- Read a skill file when its name/trigger matches the current request: `~/.ai/skills/<skill-name>.md`
-
-## Memory
-
-opencode does not persist memory across sessions. `~/.ai/memory/` is for manual reference files, read on request only — no auto-injection.
+- Read files with: `read` tool, or `glob("~/.ai/skills/*.md")` via `glob` tool
+- Load skill on trigger match: `~/.ai/skills/<skill-name>.md`
 
 ## Session Access
 
 Session data is stored in SQLite at `~/.local/share/opencode/opencode.db`.
 
-Find the latest session:
-
+Find latest session:
 ```bash
 sqlite3 ~/.local/share/opencode/opencode.db \
   "SELECT id FROM session ORDER BY time_created DESC LIMIT 1;"
 ```
 
-Export a transcript:
-
+Export transcript:
 ```bash
 sqlite3 ~/.local/share/opencode/opencode.db \
   "SELECT json_object(
@@ -43,7 +34,5 @@ sqlite3 ~/.local/share/opencode/opencode.db \
 No API, export command, or internal memory hook. SQLite is the only access path.
 
 ## Limitations
-
-- **No cross-session memory**: each session starts fresh.
 - **No native PR/issue integration**: use `bash` with `gh` CLI if available.
 - **No conversation branching**: sessions are linear.

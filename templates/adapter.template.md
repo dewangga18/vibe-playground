@@ -12,36 +12,24 @@ You are a CLI coding agent without a dedicated file in `~/.ai/adapters/`. Create
 4. Keep it lean: skip any section that doesn't apply, don't restate what you already know
    about your own tools (no tool-list tables — that's redundant with your system prompt),
    and don't pad with examples that just repeat the section above them.
-5. After saving the adapter, ask the user about auto-injection:
-   - Check if you support a startup or steering file that loads automatically every session
-     (this is your `native_entry_files.global` from the block below, if you filled it in).
-   - If yes, present **two options** to the user:
-     - **Option A — auto-inject:** Create a startup/steering file that instructs you to read
-       your global agent instructions file (e.g. `~/AGENTS.md` or equivalent for your agent) at 
-       the start of every session. State what the file is, where it lives, and that it will affect 
-       all sessions including unrelated projects. Ask for explicit approval before creating anything.
-     - **Option B — manual:** No file created. User mentions `~/<agent-name>.md` when needed.
-   - Do not name specific filenames (e.g. `AGENTS.md`, `CLAUDE.md`) in the options — you know
-     what your own startup file is called. Let the user approve based on impact, not file names.
-   - If you don't support a startup file, inform the user and suggest mentioning `~/<agent-name>.md`
-     manually at the start of each session.
+5. After saving, ask about auto-injection:
+   - Check if you support a startup file loaded every session (your `native_entry_files.global`).
+   - If yes, present two options:
+     - **Auto-inject:** Create startup file pointing to your global instructions. State the file, its impact on all sessions, and ask explicit approval(e.g. `~/AGENTS.md` or your agent's global instructions file).
+     - **Manual:** No file. User mentions global instructions when needed.
+   - Don't name specific filenames — user approves based on impact.
+   - No startup file support? Inform user, suggest manual mention each session.
 
 > **Note:** Skills index (what skills exist and their triggers) lives in your global agent instructions file —
 > not in this adapter. This file only covers runtime quirks specific to this agent.
 
-### Tip: Custom install path
-
-This template uses `~/.ai/` by default. <br>
-If you've set `$AI_HOME` to another location, update all
-`~/.ai/` references after copying:
-
-```bash
-grep -rl '~/.ai/' "$AI_HOME" | xargs sed -i '' "s|~/.ai/|$AI_HOME/|g"
-```
+> **Custom path?** If `$AI_HOME` is set and differs from `~/.ai/`, run:
+> ```bash
+> grep -rl '~/.ai/' "$AI_HOME" | xargs sed -i '' "s|~/.ai/|$AI_HOME/|g"
+> ```
 
 ---
-<br>
-<br>
+
 
 # Adapter — \<agent-name>
 
@@ -66,11 +54,9 @@ Skills index and trigger patterns live in your global agent instructions file �
   - project: `<e.g. ./CLAUDE.md, or: n/a>`
   - subdirectory: `<e.g. ./<dir>/CLAUDE.md, or: n/a>`
 - reconciliation_policy: `<pointer-guarded | migrate-after-run | not-applicable>`
-  <!-- pointer-guarded: entry file should be kept as a redirect to AGENTS.md, guarded against
-       being silently overwritten by native_init_command.
-       migrate-after-run: if native_init_command writes real content, that content should be
-       extracted into AGENTS.md and the entry file converted back to a pointer.
-       not-applicable: no native_init_command, or this agent doesn't load entry files this way. -->
+  <!-- pointer-guarded: entry file = redirect to AGENTS.md, guarded against silent overwrite.
+       migrate-after-run: native_init_command content → extract to AGENTS.md, convert entry to pointer.
+       not-applicable: no native_init_command or agent doesn't load entry files this way. -->
 - notes: `<e.g. "loads all hierarchy levels simultaneously, more specific wins">`
 
 ## Native Always-Active Mechanism
@@ -80,10 +66,7 @@ Skills index and trigger patterns live in your global agent instructions file �
 - supported: `<yes/no>`
 - mechanism: `<e.g. hooks config at .agent/hooks.json, steering docs at .agent/steering/*.md, or: none>`
 - format: `<brief note on expected format/schema, or: n/a>`
-- If `supported: no` → always-active rules for this agent fall back to `~/ALWAYS.md`, reached
-  indirectly: the pointer set up in step 5 points to the global instructions file
-  (`~/AGENTS.md`), which itself points to `~/ALWAYS.md` in its "Always-Active Skills" section
-  (see `AGENTS.global.template.md` step 8) — not a direct pointer to `~/ALWAYS.md`.
+- If `supported: no` → always-active rules fall back to `~/ALWAYS.md` (indirectly via AGENTS.md → Always-Active Skills section — not a direct pointer).
 
 ## Session Access *(omit if not applicable)*
 - Transcript location: `<path pattern>`

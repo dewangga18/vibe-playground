@@ -28,8 +28,8 @@ A file only "exists" to Xcode once **Reference** (`PBXFileReference`/`PBXGroup`)
    Verify: `grep -c "<File>.swift" *.xcodeproj/project.pbxproj` (expect 2+).
 3. **Scheme (new targets only):** confirm a `BuildableReference` exists in `xcshareddata/xcschemes/*.xcscheme`; watch for `<SelectedTests>` allow-lists silently skipping new test classes.
 
-Gem unavailable → don't hand-edit the pbxproj; ask the user to add the file via Xcode instead.
-New test *targets* need more wiring — see `testing.md` → Test Target Setup.
+Gem unavailable → ask user to add file via Xcode.
+New test *targets* — see `testing.md` → Test Target Setup.
 
 ## Notes
 

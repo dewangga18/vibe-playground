@@ -5,131 +5,71 @@ Generate the local project agent instructions file at `./AGENTS.md` (root of the
 ## Steps
 
 **0. Check for global toolkit**
-- Check if `~/.ai/` exists and your global agent instructions file (e.g. `~/AGENTS.md` or
-  equivalent for your agent) exists.
-- **If `~/.ai/` is missing entirely:**
-  > "Global AI toolkit (`~/.ai/`) not found. This project uses `vibe-playground` for shared skills
-  > and standards. You can:
-  > - **Set it up now** — point me to your local `vibe-playground/` clone or share the repo URL
-  >   and I'll guide you through setup.
-  > - **Provide your own context** — share any plan, standards doc, or template you want me to
-  >   follow for this project. I'll use that as the basis for `./AGENTS.md`.
-  > - **Skip for now** — I'll generate a minimal `./AGENTS.md` from the project codebase only,
-  >   no global context. You can set up the toolkit later."
-  - Wait for user's choice before continuing.
-  - If option 1: run setup, then continue with this template.
-  - If option 2: read the provided context, then generate `./AGENTS.md` incorporating it.
-    Do not reference `~/.ai/` or the global instructions file in the output.
-  - If option 3: generate `./AGENTS.md` from codebase scan only.
-    Do not reference `~/.ai/` or the global instructions file in the output.
-- **If `~/.ai/` exists but the global instructions file is missing:**
-  > "Global agent instructions file not found. Want me to generate it from
-  > `~/.ai/templates/AGENTS.global.template.md` before continuing?"
-  - If yes: run `AGENTS.global.template.md` first, then continue with this template.
-  - If no: continue, but note that skills and adapter config won't be available this session.
+- Check `~/.ai/` and global agent instructions file (e.g. `~/AGENTS.md`) exist.
+- **`~/.ai/` missing entirely:**
+  > "Global AI toolkit not found. Options: **Set up now** (point to `vibe-playground/`) · **Provide your own context** (I'll use that) · **Skip** (generate from codebase only, no global context)"
+  Wait for choice. Option 1: run setup then continue. Options 2/3: generate `./AGENTS.md` without referencing `~/.ai/`.
+- **`~/.ai/` exists but global instructions missing:**
+  > "Global agent instructions not found. Generate from `~/.ai/templates/AGENTS.global.template.md` first?"
+  If yes: run global template first. If no: continue without skills/adapter config.
 
 **1. Detect existing file**
-- Check if `./AGENTS.md` already exists. Note this as first-time build or regenerate — it
-  determines whether step 4 (reconcile) runs.
-- Do NOT ask about overwrite/improve yet. That decision happens in step 4, once fresh project
-  info has actually been collected — asking now would be a blind guess with nothing concrete
-  to compare against.
+- Check if `./AGENTS.md` exists. First-time build or regenerate — determines step 4.
+- Do NOT ask about overwrite yet (deferred to step 4 after fresh data collected).
 
 **2. Check native init capability**
-- Read the active adapter's `Native Init Behavior` block (`native_init_command`,
-  `native_entry_files.project`, `reconciliation_policy`). If the adapter doesn't declare this
-  block, treat as no native mechanism and go straight to step 3 (manual).
-- **Native entry file already has real content** (e.g. `./CLAUDE.md` exists and is not just a
-  pointer) → use it as the data source for step 3. Do not re-scan the codebase from scratch;
-  extract stack/commands/architecture/gotchas from it instead.
-- **Native entry file is missing or is just a pointer, but `native_init_command` exists** →
-  offer:
-  > "This agent has `<native_init_command>` for scanning the codebase. Want me to run it first,
-  > then map the output into `./AGENTS.md`?"
-  - If yes: run it, then use its output as the source for step 3 (same as above).
-  - If no: fall through to step 3 (manual).
-- **No native mechanism declared** → go straight to step 3 (manual).
+- Read adapter's `Native Init Behavior` (`native_init_command`, `native_entry_files.project`, `reconciliation_policy`). If block missing → go to step 3 (manual).
+- **Native entry file exists with real content** (e.g. `./CLAUDE.md` has content, not just a pointer) → use as data source for step 3. Don't re-scan codebase.
+- **Native entry file missing/pointer-only, but `native_init_command` exists** → offer:
+  > "This agent has `<native_init_command>`. Run it first, then map output into `./AGENTS.md`?"
+  If yes: run, use output as source. If no: fall through to step 3 (manual).
+- **No native mechanism** → go to step 3 (manual).
 
 **3. Collect project info**
-<br>*Populate the following either by extracting from the native source identified in step 2, or
-by scanning the codebase directly if no native source is available — do not do both.*
-- Name, purpose, tech stack, environments (staging/prod endpoints if visible in config).
+<br>*Populate from native source (step 2) or scan codebase directly — do not do both.*
+- Name, purpose, tech stack, environments (endpoints from config).
 - Key commands: install, run, test, lint.
-- Top-level folder structure: scan 1-2 levels deep.
-- Non-obvious gotchas: look for comments in config files, existing docs, or ask the user.
-- If uncertain about stack (multiple stacks found, or native source is ambiguous), ask the
-  user to confirm.
+- Top-level folder structure (1-2 levels deep).
+- Non-obvious gotchas (config comments, existing docs, or ask user).
+- If stack is ambiguous, ask user to confirm.
 
-**4. Reconcile with existing file** 
-<br>*(skip entirely if step 1 found no existing `./AGENTS.md`
-— go straight to step 5 with a fresh build)*
-- Classify each output section into two kinds:
-  - **Inferable** — Stack, Commands, Folders: derived directly from the codebase/native
-    source, safe to refresh automatically.
-  - **Curated** — Mandatory Rules, Conventions (deviations), Gotchas: usually hand-written by
-    a human; the agent cannot safely regenerate these from a scan alone.
-- Diff the freshly collected info (step 2-3) against the existing file's inferable sections.
-  Summarize what changed (e.g. "test command changed from `jest` to `vitest`", "new folder
-  `services/` not documented yet").
-- Present the user with three options:
-  > "`./AGENTS.md` already exists. Based on a fresh scan, I found `<N>` changes. What would
-  > you like to do?
-  > - **Overwrite** — replace the whole file with a freshly generated version
-  > - **Suggest improvements only** — update inferable sections that changed, leave Mandatory
-  >   Rules / Conventions / Gotchas untouched, and list anything new I noticed as suggestions
-  >   for you to review and add manually
+**4. Reconcile with existing file** *(skip if step 1 found no existing `./AGENTS.md` — go to step 5)*
+- Classify output sections:
+  - **Inferable** — Stack, Commands, Folders (safe to auto-refresh from codebase).
+  - **Curated** — Mandatory Rules, Conventions, Gotchas (hand-written; don't auto-regenerate).
+- Diff fresh info vs existing inferable sections. Summarize changes.
+- Present options:
+  > "`./AGENTS.md` already exists. Found `<N>` changes. What would you like to do?
+  > - **Overwrite** — replace whole file
+  > - **Suggest improvements only** — update inferable sections, leave curated untouched; append new findings as `<!-- suggested, review before keeping -->`
   > - **Keep as is** — cancel, don't touch the file"
-- Wait for explicit confirmation before continuing.
-  - **Overwrite** → proceed to step 5, full regeneration.
-  - **Suggest improvements only** → in step 5, edit only inferable sections that changed;
-    leave curated sections untouched. For anything new found in a curated category (e.g. a
-    likely gotcha), append it under a `<!-- suggested, review before keeping -->` comment
-    instead of writing it in directly.
-  - **Keep as is** → stop here. Do not modify `./AGENTS.md`.
+- Wait for confirmation. **Keep as is** → stop.
 
 **5. Generate `./AGENTS.md`**
-<br>Save using the format below, applying the mode chosen in step 4 (fresh build, full overwrite,
-or targeted update). Keep it ~50 lines — only what an agent can't infer from the codebase itself.
+<br>Save using the format below, applying the mode from step 4. Keep ~50 lines — only what agent can't infer from codebase.
 
 **6. Wire project-level pointer**
-- Check the native entry file for this project (per adapter's `native_entry_files.project`,
-  e.g. `./CLAUDE.md`).
-- This file auto-loads every session in this project — creating or overwriting it needs
-  confirmation first, same as the global version in `AGENTS.global.template.md` step 6.
-- **Already exists as a correct pointer** → nothing to do, skip silently.
-- **Doesn't exist yet** → ask for approval, then create it as a pointer-guarded file:
-  > "I'd like to create `<entry file>` so `<agent>` auto-loads `./AGENTS.md` for this project.
-  > It'll just be a pointer — no content lives there directly. OK to create it?"
-  > "👉 Project rules: `./AGENTS.md`. Do not add content directly here — run
-  > `AGENTS.local.template.md` instead."
-- **Exists with real content** → that means it was already consumed as the source in step 2.
-  Show what was extracted and confirm before converting it to the pointer-guarded content
-  above — this replaces existing content.
-- If no native mechanism is declared for this adapter → skip this step entirely.
+- Check native entry file for this project (`native_entry_files.project`, e.g. `./CLAUDE.md`).
+- **Requires approval.** Same risk as `AGENTS.global.template.md` step 6. Never create silently.
+- **Already exists as correct pointer** → skip.
+- **Doesn't exist** → ask approval, create pointer-guarded file:
+  > "I'd like to create `<entry file>` so `<agent>` auto-loads `./AGENTS.md` for this project. It'll just be a pointer. OK?"
+  > "👉 Project rules: `./AGENTS.md`. Do not add content here — run `AGENTS.local.template.md` instead."
+- **Exists with real content** → was already consumed as source in step 2. Show extracted content, confirm before converting to pointer.
+- No native mechanism declared → skip.
 
-### Tip: Custom install path
-
-*Only relevant if `~/.ai/` is set up on this machine.*
-
-This template uses `~/.ai/` by default. <br>
-If you've set `$AI_HOME` to another location, update all
-`~/.ai/` references after copying:
-
-```bash
-grep -rl '~/.ai/' "$AI_HOME" | xargs sed -i '' "s|~/.ai/|$AI_HOME/|g"
-```
+> **Custom path?** If `$AI_HOME` is set and differs from `~/.ai/`, run:
+> ```bash
+> grep -rl '~/.ai/' "$AI_HOME" | xargs sed -i '' "s|~/.ai/|$AI_HOME/|g"
+> ```
 
 ---
-<br>
-<br>
 
 # AGENTS.md
 
-> This file is project-specific context only. Don't duplicate what linters, standards files,
-> or the codebase already enforce.
+> This file is project-specific context only. Don't duplicate what linters, standards files, or the codebase already enforce.
 >
-> *If context is insufficient for the current task, check your global agent instructions file
-> in your home directory if available, or ask the user to provide additional context.*
+> *If context is insufficient, check your global agent instructions file or ask the user.*
 
 ## Stack
 **Name:** <project/app name><br>
@@ -156,10 +96,7 @@ CI config: `<path>` *(omit if none)*
 - **Core principles.** Simplicity first, fix root causes (no temp patches), minimal impact.
 
 ## Conventions
-<!-- If ~/.ai/standards/<stack>/index.md exists and this project follows it as-is, write only:
-     "Follows ~/.ai/standards/<stack>/index.md" and stop here.
-     Otherwise, list ONLY what deviates from that standard (or, if no standards file exists
-     for this stack, list the actual conventions in use). Do not restate the full standard. -->
+<!-- If ~/.ai/standards/<stack>/index.md exists and this project follows it as-is, write only "Follows ~/.ai/standards/<stack>/index.md". Otherwise list ONLY what deviates from that standard. Do not restate the full standard. -->
 - Naming: <e.g. camelCase vars, PascalCase types>
 - Doc comments: every new function/method needs a short comment (purpose, params, return) in the language's standard format.
 - Commit format: `<type>: <short description>`

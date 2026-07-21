@@ -7,58 +7,37 @@ description: Generate concise changelog-style reports from current git changes.
 
 ## Input and Source Discovery
 
-Determine the diff source using this priority order:
+Priority order:
+1. **Explicit `commit` param** → use directly, ignore working directory.
+   - One commit: `git diff <id>^ <id>` (or `git show <id>` for root commit).
+   - Two commits: `git diff <id1> <id2>`.
+2. **No param, uncommitted changes** (`git status --porcelain` non-empty) → use:
+   - `git diff HEAD` (staged + unstaged)
+   - Plus untracked: `git status --porcelain | grep '^??'` (invisible to `git diff`)
+3. **Clean working dir, no param** → latest commit: `git diff HEAD^ HEAD` (or `git show HEAD` for repo's only commit).
 
-1. **Explicit `commit` param given** → use it directly, ignore working directory state.
-   - One commit-id → diff that commit against its parent: `git diff <id>^ <id>`
-     (if it has no parent — root commit — fall back to `git show <id>`).
-   - Two commit-ids → `git diff <id1> <id2>`.
-2. **No param, working directory has uncommitted changes** → check with
-   `git status --porcelain`; if non-empty, use those changes:
-   - `git diff HEAD` (covers staged + unstaged together)
-   - plus untracked files: `git status --porcelain | grep '^??'`
-     (these are invisible to `git diff` and must be read directly)
-3. **Working directory clean, no param** → fall back to the latest commit:
-   `git diff HEAD^ HEAD` (or `git show HEAD` if it's the repo's only commit).
-
-Read affected files only when additional context is required beyond the diff.
+Read affected files only when additional context needed beyond diff.
 
 # Locale Option
 
-Accept any ISO 639-1 locale code via the `locale` param:
+`locale=<locale>` — Any ISO 639-1 code (en, id, ja, fr...). Default: `en`.
 
-```
-locale=<locale>   e.g. en, id, ja, fr, de, zh, ko, …
-```
-
-Default is **English (`en`)** unless the user explicitly passes a different locale. When invoked without the `locale` param, the skill MUST default to `en` and produce properly formatted English output.
-
-The agent adapts **both output wording and its internal working process** (verb forms, changelog patterns, grouping labels) to match the requested locale. Use the natural changelog register of that language — not a literal word-for-word translation of the English patterns.
+Agent adapts output wording AND internal working process (verb forms, changelog patterns, grouping labels) to match locale. Use natural changelog register — not word-for-word translation.
 
 # Size Option
 
-Control approximate line length (characters per bullet point) via the `size` param:
-
-```
-size=<number>   e.g. 50, 70, 80, 90, 100
-```
-
-Default is **65–100 characters** per line (current behavior). The agent will regenerate output to meet the target:
-- `size=80` → each line close to or concise ~80 chars lines
-- `size=90-100` → each line in 90–100 char range
+`size=<number>` (50, 70, 80, 90, 100...) — target line length in chars. Default: 65–100.
+- `size=80` → lines ~80 chars
+- `size=90-100` → lines 90–100 chars
 
 
 # Output Format
 
-The output must follow the existing release summary style:
-- Markdown bullet list
-- One change per line
-- Short and consistent wording
-- Product-oriented
-- Avoid raw technical diff explanation
+Markdown bullet list. One change per line. Short, consistent, product-oriented. Avoid raw technical diff.
 
-Example (default — `locale=en`):
+Examples:
 
+`locale=en`:
 ```md
 - Refactored network error handling mechanism.
 - Cleaned up error handling boilerplate in the repository layer.
@@ -67,8 +46,7 @@ Example (default — `locale=en`):
 - Updated reward search thumbnail rendering.
 ```
 
-Example (`locale=id`):
-
+`locale=id`:
 ```md
 - Refaktorisasi mekanisme error handling pada layanan jaringan.
 - Pembersihan boilerplate error handling pada layer repository.
@@ -89,18 +67,13 @@ Use concise changelog wording. Apply locale-native verb forms — not word-for-w
 | Improvement | `Improved <area>.` · `Updated <area>.` · `Optimized <area>.` |
 | Refactor | `Refactored <area>.` · `Simplified <area>.` · `Cleaned up <area>.` |
 
-**Grouping** — summarize by concern, not by file. <br>
-Bad: `Updated NetworkManager.swift.` <br>
-Good: `Refactored network error handling mechanism.`
+**Grouping:** Summarize by concern, not file. (Bad: `Updated NetworkManager.swift.` Good: `Refactored network error handling mechanism.`)
 
-**Technical terms** — include only when they represent meaningful changes (`SDK wrapper`, `OTP`, `Realm migration`, `Swift Concurrency`, `API layer`). <br>
-Bad: `Removed #if targetEnvironment(simulator).` <br>
-Good: `Simplified SDK integration using centralized wrapper and reduced conditional code.`
+**Technical terms:** Include only when meaningful (`SDK wrapper`, `OTP`, `Swift Concurrency`). (Bad: `Removed #if targetEnvironment(simulator).` Good: `Simplified SDK integration using centralized wrapper.`)
 
-# Transformation Example
+## Transformation Example
 
-## Input
-
+Input:
 ```
 Create SDK wrapper.
 Remove simulator conditional compilation.
@@ -109,8 +82,7 @@ Fix redeem availability checking.
 Investigate scanner offline issue.
 ```
 
-## Output (`locale=en` — default)
-
+Output (`locale=en`):
 ```md
 - Implemented centralized SDK wrapper to simplify integration and reduce conditional code.
 - Cleaned up image layout after removing adaptive image handling.
@@ -120,8 +92,7 @@ Investigate scanner offline issue.
 
 # Quality Checklist
 
-Before generating final output:
-
+Before generating:
 * One line per change
 * No detailed explanation
 * No file names
