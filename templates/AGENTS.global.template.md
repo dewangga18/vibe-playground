@@ -27,11 +27,8 @@ Generate or update the global agent instructions file at `~/AGENTS.md`.
 **3. Scan available assets**
 - Adapters: `ls ~/.ai/adapters/*.md` — collect agent names from filenames.
 - Skills: `ls ~/.ai/skills/*.md` — read frontmatter `name`, `description`, first heading.
-- Identify active adapter (`~/.ai/adapters/<agent-name>.md`). Read its `Native Always-Active Mechanism` block.
-  - If `supported: no`, or block missing, or no adapter → fall back to `~/ALWAYS.md`.
 - If `~/AGENTS.md` already exists (step 1) with adapter/skills tables: diff fresh scan vs recorded.
-  For skills: union recorded + always-active source (`~/ALWAYS.md` or native mechanism), then diff.
-  New = appears now but not in either source. Removed = recorded but no longer found.
+  New = appears now but not recorded. Removed = recorded but no longer found.
 
 **4. Reconcile with existing file** *(skip if step 1 found no existing `~/AGENTS.md` — go to step 5)*
 - Summarize diff: new/removed adapters, new/removed skills.
@@ -57,42 +54,16 @@ Save using the format below, applying the mode from step 4. Fill adapter table a
 - **Exists with real content** → `reconciliation_policy: migrate-after-run` applies. Show what will be extracted into `~/AGENTS.md`, confirm before overwriting. After approval: extract useful content, convert entry file to pointer.
 - If `reconciliation_policy: not-applicable` → skip.
 
-**7. Always-active rules (optional)**
-- Zero skills AND first-time build → skip entirely.
-
-*First-time build:*
-- Show full skills list from step 3. Ask:
-  > "Apply any rules on EVERY request? Pick from skills above or give custom instruction."
-- Nothing selected → skip, don't create file.
-
-*Regenerate with new skills:*
-- Don't re-ask about already recorded skills (listed in Skills Index OR always-active source).
-- For genuinely new skills: analyze frontmatter/description — suitable for always-on?
-- If yes → ask user for each candidate. If none → skip silently.
-
-*Where to write:*
-- Adapter `Native Always-Active Mechanism` `supported: yes` → write to its declared path.
-- Otherwise → `~/ALWAYS.md`. If exists, show contents and confirm append vs. replace.
-
-**8. Wire the always-active pointer into `~/AGENTS.md`**
-- Only relevant when step 7 wrote to `~/ALWAYS.md` (generic fallback). If native mechanism (`supported: yes`), add informational note only — do NOT add "read now" instruction.
-- Insert after `## No adapter for you yet?`, before `## Skills Index`.
-- Patch Skills Index table: for skills just added to always-active source, replace full row with footnote: `` `<name>` — always-active, see ~/ALWAYS.md `` (or native file).
-
-Generic fallback:
-```bash
-## Always-Active Skills
-
-If `~/ALWAYS.md` exists, read it now and load every skill listed in it before responding
-to any request this session.
-```
-
-Native fallback (informational only):
-```bash
-## Always-Active Rules
-This agent uses <AgentName>'s native always-active mechanism — see
-`~/.ai/adapters/<agent-name>.md` (Native Always-Active Mechanism block). Not routed through this file.
-```
+**7. Always-active skills (optional)**
+- Zero skills → skip entirely.
+- Show skills list from step 3. Ask:
+  > "Apply any on every request? Pick from skill list or give custom instruction."
+- Nothing selected → skip.
+- Selected → they'll be listed directly in `~/AGENTS.md` under `## Always-Active Skills` (step 5).
+  For each selected skill, analyze its frontmatter/description and ask:
+  > "When should the agent skip `<name>`? (e.g. 'No transcripts available', 'Not a git project')"
+  User can accept, edit, or leave blank (no skip condition).
+  Patched in Skills Index as footnote: `` `<name>` — always-active (see section above) ``.
 
 > **Custom path?** If `$AI_HOME` is set and differs from `~/.ai/`, run:
 > ```bash
@@ -138,12 +109,16 @@ Save to `~/.ai/adapters/<agent-name>.md`.
 
 ## Always-Active Skills
 
-<!-- Include ONLY if ~/ALWAYS.md was created in step 7/8. Omit if no always-active skills selected or step 3 found zero skills. -->
-If `~/ALWAYS.md` exists, read it now and load every skill listed in it before responding to any request this session.
+<!-- Include only if step 7 selected skills. Omit entirely if none. -->
+Read every applicable skill at session start. Skip any whose `Skip if` condition matches current context. If `Skip if` is blank, always read that skill.
+
+| Skill | File | Skip if |
+|---|---|---|
+| `<name>` | `~/.ai/skills/<name>.md` | `<condition or blank>` |
 
 ## Skills Index
 
-<!-- FILL from ~/.ai/skills/*.md scan — one row per file, EXCEPT skills already listed in ~/ALWAYS.md or native always-active mechanism. For those, use footnote: "`<name>` — always-active, see ~/ALWAYS.md". -->
+<!-- FILL from ~/.ai/skills/*.md scan — one row per file. For skills listed in Always-Active Skills above, use footnote: "`<name>` — always-active (see section above)". -->
 | Skill | Trigger pattern | Description | File |
 |---|---|---|---|
 | `<name>` | `<example phrases that should load this skill>` | `<one-line description>` | `~/.ai/skills/<name>.md` |
@@ -160,20 +135,3 @@ If no index exists, offer to generate (see "When to Read This File").
 ## Memory
 
 No agent here has automatic cross-session memory. `~/.ai/memory/` is for manual reference files — read on request only, no auto-injection.
-
----
-
-## `~/ALWAYS.md` format *(for step 7 — save to `~/ALWAYS.md`, not `~/AGENTS.md`)*
-
-```markdown
-## Always-Active Skills
-
-Unlike the Skills Index below, these are read proactively at the start
-of every session — not gated behind a trigger phrase match.
-
-| Skill | File |
-|---|---|
-| `<id>` | `~/.ai/skills/<id>.md` |
-```
-
-List only the skills selected in step 7. One row per skill.

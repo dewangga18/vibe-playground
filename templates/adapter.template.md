@@ -5,9 +5,9 @@ You are a CLI coding agent without a dedicated file in `~/.ai/adapters/`. Create
 1. Identify yourself (agent name, e.g. `kiro-cli`, `opencode`, `codebuff`).
 2. Fill in the template below based on what you actually know about your own runtime —
    don't guess; check your own docs/config if unsure, or leave a placeholder `<TODO>`.
-   For the **Native Init Behavior** and **Native Always-Active Mechanism** blocks specifically,
-   verify against your own docs before writing "none" — these affect how other templates
-   (`AGENTS.local.template.md`, `AGENTS.global.template.md`) reconcile with your native tooling.
+   For the **Native Init Behavior** block specifically,
+   verify against your own docs before writing "none" — it affects how `AGENTS.global.template.md`
+   reconciles with your native tooling.
 3. Save the result to `~/.ai/adapters/<agent-name>.md`.
 4. Keep it lean: skip any section that doesn't apply, don't restate what you already know
    about your own tools (no tool-list tables — that's redundant with your system prompt),
@@ -58,15 +58,6 @@ Skills index and trigger patterns live in your global agent instructions file �
        migrate-after-run: native_init_command content → extract to AGENTS.md, convert entry to pointer.
        not-applicable: no native_init_command or agent doesn't load entry files this way. -->
 - notes: `<e.g. "loads all hierarchy levels simultaneously, more specific wins">`
-
-## Native Always-Active Mechanism
-<!-- Separate from Native Init Behavior above. This is about RULES the agent applies on every
-     request regardless of trigger match — e.g. hooks, steering docs, or an interview-based
-     setup flow. Does this agent support that outside of just reading an instructions file? -->
-- supported: `<yes/no>`
-- mechanism: `<e.g. hooks config at .agent/hooks.json, steering docs at .agent/steering/*.md, or: none>`
-- format: `<brief note on expected format/schema, or: n/a>`
-- If `supported: no` → always-active rules fall back to `~/ALWAYS.md` (indirectly via AGENTS.md → Always-Active Skills section — not a direct pointer).
 
 ## Session Access *(omit if not applicable)*
 - Transcript location: `<path pattern>`
