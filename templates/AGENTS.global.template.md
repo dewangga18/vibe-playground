@@ -168,13 +168,13 @@ Read this file at the start of every session. After reading:
 
 - **No `./AGENTS.md` in project root** → generate one before starting work:
   tell the user and offer to run `~/.ai/templates/AGENTS.local.template.md`.
-- **Stack detected but no `~/.ai/standards/<stack>.md`** → offer to create one:
+- **Stack detected but no `~/.ai/standards/<stack>/index.md`** → offer to create one:
   > "No standards found for `<stack>`. Generate from `~/.ai/templates/standard.template.md`?"
   Wait for user confirmation before proceeding.
-  - If `~/.ai/templates/standard.template.md` exists → run it to generate the file.
+  - If `~/.ai/templates/standard.template.md` exists → run it to generate the files.
   - If not → check if a `vibe-playground/` clone is available and offer to copy the template from there.
   - If neither → ask the user to provide stack conventions or rules to follow, then generate
-    `~/.ai/standards/<stack>.md` from that context directly.
+    `~/.ai/standards/<stack>/index.md` and section files from that context directly.
 - **User request is ambiguous** → check the Skills Index below before asking for clarification.
   A matching skill likely covers it.
 
@@ -219,8 +219,8 @@ Do not load skills preemptively — only when the trigger pattern matches.
 
 ## Standards
 
-Coding standards live in `~/.ai/standards/<tech-stack>.md` — an **index**, not the full
-standard. It links to focused section files under `~/.ai/standards/<tech-stack>/` (structure,
+Coding standards live in `~/.ai/standards/<tech-stack>/index.md` — an **index**, not the full
+standard. It links to focused section files under `~/.ai/standards/<tech-stack>/parts/` (structure,
 testing, dependency injection, libraries, etc.), each gated behind a trigger pattern — same
 discovery pattern as the Skills Index above. Read the index first, then only the section(s)
 whose trigger matches the current task.

@@ -156,8 +156,8 @@ CI config: `<path>` *(omit if none)*
 - **Core principles.** Simplicity first, fix root causes (no temp patches), minimal impact.
 
 ## Conventions
-<!-- If ~/.ai/standards/<stack>.md exists and this project follows it as-is, write only:
-     "Follows ~/.ai/standards/<stack>.md" and stop here.
+<!-- If ~/.ai/standards/<stack>/index.md exists and this project follows it as-is, write only:
+     "Follows ~/.ai/standards/<stack>/index.md" and stop here.
      Otherwise, list ONLY what deviates from that standard (or, if no standards file exists
      for this stack, list the actual conventions in use). Do not restate the full standard. -->
 - Naming: <e.g. camelCase vars, PascalCase types>

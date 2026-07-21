@@ -1,8 +1,8 @@
 # Standard Template — Instructions for the Agent
 
 Generate a **split** coding standards set for a specific tech-stack:
-- `~/.ai/standards/<tech-stack>.md` — index file (core rules + trigger table, always read)
-- `~/.ai/standards/<tech-stack>/<section>.md` — one file per topic (read only on trigger match)
+- `~/.ai/standards/<tech-stack>/index.md` — index file (core rules + trigger table, always read)
+- `~/.ai/standards/<tech-stack>/parts/<section>.md` — one file per topic (read only on trigger match)
 
 ## Steps
 
@@ -37,19 +37,9 @@ Generate a **split** coding standards set for a specific tech-stack:
   table check in step 4), and they need to stay consistent across every stack and language.
 
 **4. Check for existing file**
-- Check both `~/.ai/standards/<tech-stack>.md` and `~/.ai/standards/<tech-stack>/`.
-- **Neither exists** → first-time build. Skip to step 5.
-- **Index exists but has no `## Sections` table** (old single-file format, from before this
-  split existed) → treat as legacy monolithic content. Show it and ask:
-  > "Found `~/.ai/standards/<tech-stack>.md` in the old single-file format. What would you like to do?
-  > - **Split it** — reorganize the current content into per-section files, no fresh web search
-  > - **Regenerate fresh** — discard it, do a full search and rebuild in the new split format
-  > - **Keep as is** — cancel, don't touch anything"
-  - **Split it** → skip step 6 (gathering source material) entirely; use the existing content as the source
-    for step 7, mapping its existing sections onto the new section files as closely as possible.
-  - **Regenerate fresh** → proceed as a normal fresh build (steps 5-8).
-  - **Keep as is** → stop here.
-- **Split-format index already exists** (has a `## Sections` table) → show the current section
+- Check `~/.ai/standards/<tech-stack>/index.md`.
+- **Doesn't exist** → first-time build. Skip to step 5.
+- **Exists with a `## Sections` table** → index already exists. Show the current section
   list and ask:
   > "Standards for `<tech-stack>` already exist (`<N>` sections: `<list>`). What would you like to do?
   > - **Add section(s)** — keep everything, add new ones (tell me which topics)
@@ -61,6 +51,8 @@ Generate a **split** coding standards set for a specific tech-stack:
   - This choice and step 2's scope both narrow the same thing (which sections get touched) —
     if they conflict (e.g. step 2 said "testing only" but the user picks "Regenerate all" here),
     the more specific/recent instruction wins; when unclear, ask.
+- **Exists but no `## Sections` table** → not a valid standards index. Ask whether to
+  overwrite or skip, then continue accordingly.
 
 **5. Determine sections**
 - If step 2 found a **specific topic** → this step is just that one section (plus, if the topic
@@ -78,7 +70,6 @@ Generate a **split** coding standards set for a specific tech-stack:
   section(s), not the full baseline.
 
 **6. Gather source material**
-- Skip entirely if step 4 chose "Split it" (existing content is the source instead).
 - Check first: did the user already give rough rules/points for the section(s) in scope —
   either in this request or earlier in the conversation? If so, that's the primary source.
   Don't run it through a search-and-override; the user's explicit rule wins.
@@ -97,13 +88,13 @@ Generate a **split** coding standards set for a specific tech-stack:
   opinions without broad adoption.
 
 **7. Generate section files**
-- Save each to `~/.ai/standards/<tech-stack>/<section>.md` using the section
+- Save each to `~/.ai/standards/<tech-stack>/parts/<section>.md` using the section
   format below, written in the locale from step 3.
 - Keep each one short — aim for under 40 lines. Depth is fine when the topic needs it, but
   padding defeats the point of splitting: cheap, focused reads.
 
 **8. Generate/update the index file**
-- Save `~/.ai/standards/<tech-stack>.md` using the index format below, written in the locale
+- Save `~/.ai/standards/<tech-stack>/index.md` using the index format below, written in the locale
   from step 3. Update the `<!-- locale: -->` marker to match.
 - **Core Rules**: 3-5 bullets max — only things so universal they apply no matter what the
   task is (e.g. required formatter, minimum language version). If nothing qualifies, omit the
@@ -127,7 +118,7 @@ grep -rl '~/.ai/' "$AI_HOME" | xargs sed -i '' "s|~/.ai/|$AI_HOME/|g"
 <br>
 <br>
 
-## Index file format — `~/.ai/standards/<tech-stack>.md`
+## Index file format — `~/.ai/standards/<tech-stack>/index.md`
 
 ```markdown
 # Standards — <Tech Stack>
@@ -143,11 +134,11 @@ grep -rl '~/.ai/' "$AI_HOME" | xargs sed -i '' "s|~/.ai/|$AI_HOME/|g"
 <!-- One row per generated section file. Skip rows for sections that don't apply. -->
 | Section | Trigger pattern | Description | File |
 |---|---|---|---|
-| `structure` | `<example phrases>` | File/folder organization, naming | `~/.ai/standards/<tech-stack>/structure.md` |
-| `testing` | `<example phrases>` | Testing conventions and patterns | `~/.ai/standards/<tech-stack>/testing.md` |
-| `dependency-injection` | `<example phrases>` | DI conventions | `~/.ai/standards/<tech-stack>/dependency-injection.md` |
-| `dependencies` | `<example phrases>` | Approved libraries + install/add/update commands | `~/.ai/standards/<tech-stack>/dependencies.md` |
-| `<stack-specific>` | `<example phrases>` | `<description>` | `~/.ai/standards/<tech-stack>/<name>.md` |
+| `structure` | `<example phrases>` | File/folder organization, naming | `~/.ai/standards/<tech-stack>/parts/structure.md` |
+| `testing` | `<example phrases>` | Testing conventions and patterns | `~/.ai/standards/<tech-stack>/parts/testing.md` |
+| `dependency-injection` | `<example phrases>` | DI conventions | `~/.ai/standards/<tech-stack>/parts/dependency-injection.md` |
+| `dependencies` | `<example phrases>` | Approved libraries + install/add/update commands | `~/.ai/standards/<tech-stack>/parts/dependencies.md` |
+| `<stack-specific>` | `<example phrases>` | `<description>` | `~/.ai/standards/<tech-stack>/parts/<name>.md` |
 
 When a task matches a trigger pattern, read that section file before responding.
 Do not preload sections — except when bootstrapping a brand-new/empty project for this stack
@@ -155,7 +146,7 @@ Do not preload sections — except when bootstrapping a brand-new/empty project 
 section file once up front in that case, since most of them apply during initial setup anyway.
 ```
 
-## Section file format — `~/.ai/standards/<tech-stack>/<section>.md`
+## Section file format — `~/.ai/standards/<tech-stack>/parts/<section>.md`
 
 ```markdown
 # <Tech Stack> — <Section Title>

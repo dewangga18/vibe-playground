@@ -188,8 +188,12 @@ Templates in `~/.ai/templates/` are prompt instructions for generating standard 
 | `README.template.md` | `./README.md` | Project README from codebase scan |
 | `adapter.template.md` | `~/.ai/adapters/<agent>.md` | New agent adapter |
 | `standard.template.md` | `~/.ai/standards/<stack>.md` + `~/.ai/standards/<stack>/` | Per-stack coding standards — split into index + per-topic section files, loaded on trigger match |
+ 
+ > **Note:** All templates hardcode `~/.ai/`. See [$AI_HOME & Custom Path](#ai_home--custom-path) if you rename the directory.
+ 
+ ## Draft Standards
 
-> **Note:** All templates hardcode `~/.ai/`. See [$AI_HOME & Custom Path](#ai_home--custom-path) if you rename the directory.
+The `standards/*/` folders are **personal drafts** — incomplete, opinionated templates per stack. Not ready for general use; treat them as scratch space.
 
 ## Known Limitations
 
