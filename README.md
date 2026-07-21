@@ -19,7 +19,7 @@ vibe-playground/        ← you edit here (source/draft)
 ├── adapters/           # per-agent runtime quirks: file tools, session paths, limitations
 ├── memory/             # manual reference files (read on request, no auto-injection)
 ├── skills/             # reusable task prompts — flat .md files
-├── standards/          # per-stack coding standards
+├── standards/          # per-stack coding standards (index + per-topic files)
 └── templates/          # templates for generating AGENTS.md, README, adapters, standards
 ```
 
@@ -187,7 +187,7 @@ Templates in `~/.ai/templates/` are prompt instructions for generating standard 
 | `AGENTS.local.template.md` | `./AGENTS.md` | Project-specific instructions — stack, commands, gotchas |
 | `README.template.md` | `./README.md` | Project README from codebase scan |
 | `adapter.template.md` | `~/.ai/adapters/<agent>.md` | New agent adapter |
-| `standard.template.md` | `~/.ai/standards/<stack>.md` | Per-stack coding standards |
+| `standard.template.md` | `~/.ai/standards/<stack>.md` + `~/.ai/standards/<stack>/` | Per-stack coding standards — split into index + per-topic section files, loaded on trigger match |
 
 > **Note:** All templates hardcode `~/.ai/`. See [$AI_HOME & Custom Path](#ai_home--custom-path) if you rename the directory.
 
@@ -198,7 +198,7 @@ Templates in `~/.ai/templates/` are prompt instructions for generating standard 
 | `~/AGENTS.md` not auto-injected on all agents | Agent has no awareness of `~/.ai/` | Verify your agent supports startup files; mention it explicitly if needed |
 | No cross-session memory | Every session starts fresh | Use `~/.ai/memory/` for context that must persist |
 | Skills Index can go stale | Agent won't know about new skills | Regenerate `~/AGENTS.md` after adding any skill or adapter |
-| Standards not auto-generated | Agent may work without stack conventions | Agent offers to generate when stack is detected — requires global instructions file to be read at session start; falls back to vibe-playground clone or user-provided context if template is unavailable |
+| Standards not auto-generated | Agent may work without stack conventions | Agent offers to generate when stack is detected — generates split index + per-topic files; requires global instructions file to be read at session start; falls back to vibe-playground clone or user-provided context if template is unavailable |
 
 ## Troubleshooting
 

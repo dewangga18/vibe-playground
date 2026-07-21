@@ -219,9 +219,15 @@ Do not load skills preemptively — only when the trigger pattern matches.
 
 ## Standards
 
-Coding standards live in `~/.ai/standards/<tech-stack>.md`.
-Read the matching file when working on a known stack.
-If no file exists for the current stack, offer to generate one (see "When to Read This File").
+Coding standards live in `~/.ai/standards/<tech-stack>.md` — an **index**, not the full
+standard. It links to focused section files under `~/.ai/standards/<tech-stack>/` (structure,
+testing, dependency injection, libraries, etc.), each gated behind a trigger pattern — same
+discovery pattern as the Skills Index above. Read the index first, then only the section(s)
+whose trigger matches the current task.
+Exception: on a brand-new/empty project for that stack (no existing source files yet, or
+you're explicitly scaffolding one), read every section file once up front instead of waiting
+for triggers.
+If no index file exists for the current stack, offer to generate one (see "When to Read This File").
 
 ## Memory
 
