@@ -77,18 +77,6 @@ Save using the format below, applying the mode from step 4. Fill adapter table a
 Reusable AI assets (skills, standards, templates) live in `~/.ai/` — not inside any repo.
 Do not create vendor-specific directories (`.agents/`, `.opencode/`, `.kiro/`) for reusable assets.
 
-## When to Read This File
-
-Read this file at the start of every session. After reading:
-
-- **No `./AGENTS.md` in project root** → offer to run `~/.ai/templates/AGENTS.local.template.md`.
-- **Stack detected but no `~/.ai/standards/<stack>/index.md`** → offer to generate:
-  > "No standards found for `<stack>`. Generate from `~/.ai/templates/standard.template.md`?"
-  Wait for confirmation.
-  - Template exists → run it.
-  - Not → check `vibe-playground/` clone. If neither → ask user for conventions, generate from that.
-- **User request is ambiguous** → check Skills Index before asking.
-
 ## Tool Adapters
 
 Identify which CLI agent you are, then read the matching adapter:
@@ -126,11 +114,19 @@ Read every applicable skill at session start. Skip any whose `Skip if` condition
 When a user request matches a trigger pattern, read the full skill file before responding.
 Do not load skills preemptively — only when the trigger pattern matches.
 
-## Standards
+## Coding Standards
 
-Coding standards live in `~/.ai/standards/<tech-stack>/index.md` — an **index**, not the full standard. It links to focused section files under `~/.ai/standards/<tech-stack>/parts/`, each gated behind a trigger pattern — same discovery as Skills Index. Read the index first, then only sections whose trigger matches.
+Index at `~/.ai/standards/<tech-stack>/index.md`, sections under `parts/`, each gated by its own trigger — same discovery as Skills Index. Read the index first, then only sections whose trigger matches.
 Exception: on a brand-new/empty project (no existing source files), read every section once up front.
-If no index exists, offer to generate (see "When to Read This File").
+
+<!-- FILL from ~/.ai/standards/*/index.md scan — one row per stack directory found -->
+| Stack | Detect via | Directory |
+|---|---|---|
+| `<tech-stack>` | `<file types/markers that indicate this stack>` | `~/.ai/standards/<tech-stack>/` |
+
+No row for the detected stack → offer to generate:
+> "No standards found for `<stack>`. Generate from `~/.ai/templates/standard.template.md`?"
+Confirm first. Template missing → check `vibe-playground/` clone; neither → ask user for conventions, generate from that. Add a row here once done.
 
 ## Memory
 
