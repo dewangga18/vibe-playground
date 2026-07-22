@@ -11,6 +11,27 @@
 - **Formatter + Linter** — SwiftFormat + SwiftLint in CI, no manual formatting debates.
 - **API Design** — follow Official Swift API Design Guidelines.
 - **New file registration** — a file on disk isn't registered in Xcode (reference/target/scheme) until verified. Detail: `structure.md` → Xcode Project Registration. Applies to every new file — check it yourself, don't wait for a keyword match.
+- **PRODUCT_MODULE_NAME vs @testable import** — module name for `@testable import` is `PRODUCT_MODULE_NAME` (if set) or derived from `PRODUCT_NAME` (hyphens→underscores). `PRODUCT_BUNDLE_NAME` does NOT affect module naming. Verify with: `grep 'PRODUCT_MODULE_NAME\|PRODUCT_NAME' *.xcodeproj/project.pbxproj | grep -E '<Target>'`.
+
+## File Header
+
+Every `.swift` file must start with the standard header comment:
+
+```
+//
+//  <FileName>
+//  <Scheme>
+//
+//  Created by <Author> on <dd/MM/yy>
+//
+```
+
+- `<FileName>` — the Swift file name (e.g. `TokenManager.swift`)
+- `<Scheme>` — the target scheme (e.g. `Sequre`, `SequreProTest`, `ProClipTest`)
+- `<Author>` — the developer's identifier (e.g. `aaronevanjulio`)
+- `<dd/MM/yy>` — date of creation (e.g. `22/07/26`)
+
+The header applies to all Swift files regardless of target or purpose.
 
 ## Sections
 

@@ -29,6 +29,18 @@ struct LoginTests {
 }
 ```
 
+## Post-Setup Verification Checklist
+
+After creating a test target and registering a file, verify:
+
+- [ ] **`@testable import <ModuleName>`** — module name is `PRODUCT_MODULE_NAME` if set, else derived from `PRODUCT_NAME` (hyphens → underscores). Never `PRODUCT_BUNDLE_NAME`.
+- [ ] **`ENABLE_TESTABILITY = YES`** — set on the app target, all Debug configs (not the test target).
+- [ ] **`TEST_HOST`** — use `$(APP_NAME)`/`$(PRODUCT_NAME)`, never hardcoded. E.g. `$(BUILT_PRODUCTS_DIR)/$(APP_NAME).app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/$(APP_NAME)`.
+- [ ] **`INFOPLIST_FILE`** — test target needs an Info.plist: set `INFOPLIST_FILE` or `GENERATE_INFOPLIST_FILE = YES`.
+- [ ] **`PRODUCT_BUNDLE_NAME`** — must be under **Packaging** (inside the `buildSettings` block), not User-Defined. *(pending your confirmation — see note above)*
+- [ ] **PBXGroup path** — every test group uses `path = "FolderName"`, not `name` only (see `structure.md` → PBXGroup Path Rule).
+- [ ] **Mock files** — every mock/utility file referencing app-module types needs its own `@testable import` (not inherited from another test file).
+
 ## Test Target Setup (new targets only)
 
 1. **Exists?** `ruby -rxcodeproj -e 'puts Xcodeproj::Project.open("<Proj>.xcodeproj").targets.map(&:name)'`. Yes → register the file in its tree (`structure.md`). No → create one matching the app target's Swift version + min iOS deployment target.
